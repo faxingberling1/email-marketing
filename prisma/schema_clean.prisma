@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  subscriptionPlan  String    @default("free")
+  stripeCustomerId  String?   @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  contacts          Contact[]
+  campaigns         Campaign[]
+}
+
+model Contact {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  email           String
+  name            String?
+  tags            String[] @default([])
+  engagementScore Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  emails          Email[]
+
+  @@unique([userId, email])
+}
+
+model Campaign {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  name               String
+  subject            String?
+  aiContent          String?   @db.Text
+  scheduleTime       DateTime?
+  status             String    @default("draft") // draft, scheduled, sending, completed
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  emails             Email[]
+  sequences          Sequence[]
+}
+
+model Email {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id])
+  status     String   @default("pending") // pending, sent, opened, clicked, bounced
+  sentAt     DateTime?
+  opened     Boolean  @default(false)
+  clicked    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Sequence {
+  id           String    @id @default(cuid())
+  campaignId   String
+  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  stepNumber   Int
+  triggerEvent String
+  aiContent    String?   @db.Text
+  delayTime    Int       @default(0) // minutes
+  createdAt    DateTime  @default(now())
+}
