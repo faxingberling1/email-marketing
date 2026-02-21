@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react"
 import { signOut } from "@/app/auth/actions"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "./SidebarContext"
+import Link from "next/link"
 
 export function Header() {
     const { data: session } = useSession()
@@ -17,6 +18,17 @@ export function Header() {
     const userName = session?.user?.name || "User"
     const userEmail = session?.user?.email || ""
     const userInitial = userName[0]?.toUpperCase() || userEmail[0]?.toUpperCase() || "U"
+
+    const planMapping: Record<string, { name: string, color: string }> = {
+        starter: { name: "Starter", color: "text-emerald-500" },
+        growth: { name: "Growth", color: "text-indigo-400" },
+        pro: { name: "Pro", color: "text-purple-400" },
+        enterprise: { name: "Enterprise", color: "text-red-500" },
+        free: { name: "Free", color: "text-slate-500" }
+    }
+
+    const currentPlan = session?.user?.subscriptionPlan?.toLowerCase() || "free"
+    const planInfo = planMapping[currentPlan] || planMapping.free
 
     const getTimeGreeting = () => {
         const hour = new Date().getHours()
@@ -179,7 +191,12 @@ export function Header() {
                         </div>
                         <div className="hidden lg:flex flex-col items-start">
                             <span className="text-xs font-bold text-white leading-none mb-0.5">{userName}</span>
-                            <span className="text-[10px] text-slate-500 font-medium">Pro Plan</span>
+                            <span className={cn(
+                                "text-[10px] font-black uppercase tracking-widest",
+                                planInfo.color
+                            )}>
+                                {planInfo.name} Plan
+                            </span>
                         </div>
                         <ChevronDown className={cn(
                             "h-4 w-4 text-slate-500 transition-transform duration-200",
@@ -203,14 +220,22 @@ export function Header() {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white">
+                                        <Link
+                                            href="/settings"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
                                             <Settings className="h-4 w-4" />
                                             Account Settings
-                                        </button>
-                                        <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white">
+                                        </Link>
+                                        <Link
+                                            href="/settings"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
                                             <CreditCard className="h-4 w-4" />
-                                            Subscription Plan
-                                        </button>
+                                            <span>{planInfo.name} Plan</span>
+                                        </Link>
                                     </div>
 
                                     <div className="mt-2 pt-2 border-t border-white/5">

@@ -111,7 +111,11 @@ export default function SettingsPage() {
                         className="rounded-[3rem] border border-white/5 bg-slate-900/20 backdrop-blur-xl p-10 lg:p-12 shadow-2xl relative overflow-hidden"
                     >
                         {/* Background Orbital Accent */}
-                        <div className="absolute top-0 right-0 h-96 w-96 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
+                        <motion.div
+                            animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
+                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute top-0 right-0 h-96 w-96 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"
+                        />
 
                         <div className="relative z-10 h-full">
                             {activeTab === 'profile' && <ProfileSettings data={data.profile} />}
@@ -124,19 +128,29 @@ export default function SettingsPage() {
                 </AnimatePresence>
             </div>
 
-            {/* Tactical System Metadata */}
-            <div className="flex items-center justify-center gap-12 pt-8 opacity-20 group">
-                <div className="flex items-center gap-3">
-                    <Shield className="h-5 w-5 text-slate-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Core Integrity: 100%</span>
+            {/* Tactical System Metadata Loop */}
+            <div className="flex flex-col items-center gap-6 pt-12 border-t border-white/5 mx-12">
+                <div className="flex items-center justify-between w-full opacity-30">
+                    <div className="flex items-center gap-3">
+                        <Shield className="h-4 w-4 text-slate-500" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Core Integrity: 100%</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Activity className="h-4 w-4 text-slate-500" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Node Sync: Nominal</span>
+                    </div>
                 </div>
-                <div className="h-1 w-24 bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div animate={{ x: [-100, 100] }} transition={{ repeat: Infinity, duration: 4, ease: 'linear' }} className="h-full w-12 bg-indigo-500/40" />
+
+                <div className="h-[1px] w-full bg-white/5 rounded-full overflow-hidden relative">
+                    <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "200%" }}
+                        transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
+                        className="absolute h-full w-1/3 bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                    />
                 </div>
-                <div className="flex items-center gap-3">
-                    <Activity className="h-5 w-5 text-slate-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Node Sync: Nominal</span>
-                </div>
+
+                <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.5em] opacity-40">Continuous Neural Loop Active</p>
             </div>
         </div>
     )

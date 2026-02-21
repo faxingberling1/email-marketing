@@ -39,6 +39,9 @@ export default function NewCampaignPage() {
         prompt: "",
         content: "",
         segment: "All Contacts",
+        tone: "Professional",
+        language: "English",
+        cta: ""
     })
 
     const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, 4))
@@ -76,8 +79,11 @@ export default function NewCampaignPage() {
                 body: JSON.stringify({
                     prompt: formData.prompt,
                     industry: "SaaS",
-                    audience: "Modern Brands",
-                    offer: "AEM.AI Platform"
+                    audience: formData.segment,
+                    offer: "AEM.AI Platform",
+                    tone: formData.tone,
+                    language: formData.language,
+                    cta: formData.cta
                 }),
             })
             const result = await res.json()
@@ -183,6 +189,46 @@ export default function NewCampaignPage() {
                                             value={formData.prompt}
                                             onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tone</label>
+                                            <select
+                                                className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                                                value={formData.tone}
+                                                onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
+                                            >
+                                                <option>Professional</option>
+                                                <option>Urgent</option>
+                                                <option>Casual</option>
+                                                <option>Friendly</option>
+                                                <option>Direct</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Language</label>
+                                            <select
+                                                className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                                                value={formData.language}
+                                                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                                            >
+                                                <option>English</option>
+                                                <option>Spanish</option>
+                                                <option>French</option>
+                                                <option>German</option>
+                                                <option>Portuguese</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Target CTA</label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. Upgrade Now"
+                                                className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                                                value={formData.cta}
+                                                onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                         <div className="space-y-2">

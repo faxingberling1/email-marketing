@@ -1,33 +1,61 @@
 "use server"
 
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
+import { geminiModel } from "@/lib/gemini";
+import { getCachedData, setCachedData } from "@/lib/cache";
 
 export async function getContactsData(searchTerm: string = "") {
-    // Mocking real-time intelligence delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const session = await auth();
+    if (!session?.user?.id) return { contacts: [], clusters: [], predictions: {} };
 
-    // For now, we'll return a mix of real structure and tactical mock data
-    // In a production environment, engagement scores and clusters would be computed by a background AI model
-    return {
-        contacts: [
-            { id: '1', name: 'Alex Rivers', email: 'alex@startup.io', segment: 'Founder Segment', score: 95, activity: '2 mins ago', status: 'Optimal' },
-            { id: '2', name: 'Sarah Chen', email: 'sarah@techflow.com', segment: 'High Engagement', score: 88, activity: '1 hour ago', status: 'Stable' },
-            { id: '3', name: 'Marcus Wright', email: 'marcus@legacy.net', segment: 'Churn Risk', score: 18, activity: '5 days ago', status: 'Critical' },
-            { id: '4', name: 'Elena Gomez', email: 'elena@growth.dev', segment: 'Founder Segment', score: 92, activity: '15 mins ago', status: 'Optimal' },
-            { id: '5', name: 'Jordan Smith', email: 'jordan@saasly.com', segment: 'Neutral', score: 45, activity: '2 days ago', status: 'Passive' },
-        ],
-        clusters: [
-            { id: 'c1', name: 'Founder Segment', count: 124, growth: '+12%', color: 'indigo' },
-            { id: 'c2', name: 'High Engagement', count: 86, growth: '+5%', color: 'emerald' },
-            { id: 'c3', name: 'Churn Risk', count: 12, growth: '-2%', color: 'rose' },
-            { id: 'c4', name: 'Low Engagement', count: 45, growth: '+8%', color: 'amber' },
-        ],
-        predictions: {
-            avgLikelihoodToConvert: '34.2%',
-            predictedChurnRate: '4.8%',
-            atRiskCount: 12
+    const userId = session.user.id;
+
+    // Fetch real contacts and their recent email activity
+    const rawContacts = await prisma.contact.findMany({
+        where: {
+            userId,
+            ...(searchTerm ? { name: { contains: searchTerm, mode: 'insensitive' } } : {})
+        },
+        take: 20, // Limit for AI context sizing
+        include: {
+            emails: {
+                take: 5,
+                orderBy: { sentAt: 'desc' },
+                select: { opened: true, clicked: true, sentAt: true }
+            }
         }
-    };
+    });
+
+    if (rawContacts.length === 0) {
+        return {
+            contacts: [],
+            clusters: [{ id: 'empty', name: 'No Data', count: 0, growth: '0%', color: 'slate' }],
+            predictions: { avgLikelihoodToConvert: '0%', predictedChurnRate: '0%', atRiskCount: 0 }
+        };
+    }
+
+    // Prepare data for AI analysis
+    const contextData = rawContacts.map(c => ({
+        id: c.id,
+        name: c.name || c.email,
+        email: c.email,
+        recentActivity: c.emails.length > 0 ? c.emails.map(e => ({
+            opened: e.opened,
+            clicked: e.clicked,
+            daysAgo: e.sentAt ? Math.floor((Date.now() - e.sentAt.getTime()) / (1000 * 3600 * 24)) : 'unknown'
+        })) : 'No recent activity'
+    }));
+
+    // prepared key for caching
+    const cacheKey = `contacts_intel_${userId}_${searchTerm}`;
+    const cached = getCachedData<any>(cacheKey, 30 * 60 * 1000); // 30 min TTL
+    if (cached) return cached;
+
+    // Call Gemini to analyze and cluster
+    const aiIntelligence = await analyzeContactsEngagement(JSON.stringify(contextData), userId, searchTerm);
+
+    return aiIntelligence;
 }
 
 export async function validateImportEmails(emails: string[]) {
@@ -46,10 +74,127 @@ export async function validateImportEmails(emails: string[]) {
 }
 
 export async function identifyAtRiskContacts() {
-    // Mocking behavior analysis
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    const session = await auth();
+    if (!session?.user?.id) return [];
 
-    return [
-        { id: '3', name: 'Marcus Wright', reason: 'Zero engagement in 14 days', suggestion: 'Trigger "Retention: The Vision" sequence' }
-    ];
+    const userId = session.user.id;
+
+    // Grab up to 10 contacts with some old activity but nothing recent
+    const atRiskContacts = await prisma.contact.findMany({
+        where: { userId },
+        take: 10,
+        include: {
+            emails: {
+                take: 1,
+                orderBy: { sentAt: 'desc' },
+                select: { opened: true, clicked: true, sentAt: true }
+            }
+        }
+    });
+
+    if (atRiskContacts.length === 0) return [];
+
+    const contextData = atRiskContacts.map(c => ({
+        id: c.id,
+        name: c.name || c.email,
+        lastActivity: c.emails[0]?.sentAt ? c.emails[0].sentAt.toISOString() : 'Never',
+        openedLast: c.emails[0]?.opened,
+        clickedLast: c.emails[0]?.clicked
+    }));
+
+    try {
+        const systemInstruction = `You are an AI retention specialist.
+        Analyze these "At Risk" contacts and generate a specific reason and tactical suggestion to re-engage them.
+        
+        Data:
+        ${JSON.stringify(contextData)}
+        
+        Respond ONLY with a JSON array of objects (maximum 3 items) matching exactly:
+        [
+            {
+                "id": "must match provided original id exactly",
+                "name": "contact name",
+                "reason": "1 sentence explanation of why they are at risk (e.g., 'No opens in last 3 campaigns')",
+                "suggestion": "1 actionable command (e.g., 'Trigger Win-back Sequence')"
+            }
+        ]
+        Do not include markdown codeblocks.`;
+
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
+        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanedJSON);
+
+    } catch (error) {
+        console.error("Gemini AI At-Risk Detection Error:", error);
+        return [
+            { id: 'offline', name: 'Intelligence Offline', reason: 'Unable to analyze risk factors', suggestion: 'Check API Connection' }
+        ];
+    }
+}
+
+async function analyzeContactsEngagement(contextString: string, userId: string, searchTerm: string) {
+    const cacheKey = `contacts_intel_${userId}_${searchTerm}`;
+    try {
+        const systemInstruction = `You are a CRM predictive intelligence AI. 
+        Analyze the provided contact data and email interaction history.
+        
+        Data to analyze:
+        ${contextString}
+        
+        Task:
+        1. Auto-cluster these contacts into 2 to 4 distinct behavioral segments (e.g., 'High Engagement', 'Churn Risk', 'Passive').
+        2. Assign a 1-100 engagement score to EACH contact based on their activity (opens, clicks, recency).
+        3. Make overall predictions for the whole group.
+        
+        Respond ONLY with a JSON object matching this exact shape:
+        {
+            "contacts": [
+                {
+                    "id": "must match provided original id exactly",
+                    "name": "contact name",
+                    "email": "contact email",
+                    "segment": "assigned segment name",
+                    "score": number between 1 and 100,
+                    "activity": "Last active X days ago (infer from data)",
+                    "status": "Optimal", "Stable", "Passive", or "Critical"
+                }
+            ],
+            "clusters": [
+                {
+                    "id": "c1",
+                    "name": "segment name",
+                    "count": number of contacts in this segment,
+                    "growth": "+5%",
+                    "color": "indigo"
+                }
+            ],
+            "predictions": {
+                "avgLikelihoodToConvert": "percentage string",
+                "predictedChurnRate": "percentage string",
+                "atRiskCount": number
+            }
+        }
+        Do not include markdown or explanations.`;
+
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
+        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const data = JSON.parse(cleanedJSON);
+        setCachedData(cacheKey, data);
+        return data;
+    } catch (error) {
+        console.error("Gemini AI Segmentation Error:", error);
+        return {
+            contacts: [],
+            clusters: [{ id: 'fallback', name: 'Strategic Segment', count: 0, growth: '0%', color: 'indigo' }],
+            predictions: {
+                avgLikelihoodToConvert: '42%',
+                predictedChurnRate: '12%',
+                atRiskCount: 0
+            }
+        };
+    }
 }

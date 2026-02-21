@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import { authConfig } from "./auth.config"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 
 declare module "next-auth" {
@@ -10,6 +11,7 @@ declare module "next-auth" {
         user: {
             id: string
             onboardingCompleted: boolean
+            subscriptionPlan: string
         } & DefaultSession["user"]
     }
 }
@@ -19,6 +21,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
     providers: [
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        }),
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -46,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     email: user.email,
                     name: user.name,
                     onboardingCompleted: user.onboardingCompleted,
+                    subscriptionPlan: user.subscriptionPlan,
                 }
             }
         })
@@ -56,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.id = user.id
                 token.onboardingCompleted = (user as any).onboardingCompleted
+                token.subscriptionPlan = (user as any).subscriptionPlan
             }
             if (trigger === "update" && session) {
                 token.onboardingCompleted = session.onboardingCompleted
@@ -66,6 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (token && session.user) {
                 session.user.id = token.id as string
                 session.user.onboardingCompleted = token.onboardingCompleted as boolean
+                session.user.subscriptionPlan = token.subscriptionPlan as string
             }
             return session
         }

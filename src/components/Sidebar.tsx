@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils"
 import { signOut } from "@/app/auth/actions"
 import { useSidebar } from "./SidebarContext"
 import { motion, AnimatePresence } from "framer-motion"
+import { useSession } from "next-auth/react"
 
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -44,6 +45,18 @@ const navigation = [
 export function Sidebar() {
     const pathname = usePathname()
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
+    const { data: session } = useSession()
+
+    const planMapping: Record<string, { name: string, color: string, limit: string, progress: string }> = {
+        starter: { name: "Starter Plan", color: "from-emerald-500 to-teal-500", limit: "10k", progress: "45%" },
+        growth: { name: "Growth Plan", color: "from-indigo-500 to-sky-500", limit: "50k", progress: "30%" },
+        pro: { name: "Pro Plan", color: "from-purple-500 to-indigo-500", limit: "200k", progress: "25%" },
+        enterprise: { name: "Enterprise Plan", color: "from-red-500 to-orange-500", limit: "Unlimited", progress: "10%" },
+        free: { name: "Free Plan", color: "from-slate-500 to-slate-400", limit: "1k", progress: "25%" }
+    }
+
+    const currentPlan = session?.user?.subscriptionPlan?.toLowerCase() || "free"
+    const planInfo = planMapping[currentPlan] || planMapping.free
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-white/5 bg-slate-950 px-3 py-6 relative">
@@ -157,14 +170,14 @@ export function Sidebar() {
                     >
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Current Plan</p>
                         <div className="mt-2 flex items-center justify-between">
-                            <span className="text-sm font-bold text-white">Free Plan</span>
-                            <span className="text-xs text-slate-500">0/1k</span>
+                            <span className="text-sm font-bold text-white">{planInfo.name}</span>
+                            <span className="text-xs text-slate-500">Vol: {planInfo.limit}</span>
                         </div>
                         <div className="mt-3 h-1 w-full rounded-full bg-slate-800 overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: "25%" }}
-                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                                animate={{ width: planInfo.progress }}
+                                className={cn("h-full bg-gradient-to-r", planInfo.color)}
                             />
                         </div>
                         <button className="mt-4 w-full rounded-xl bg-indigo-600 px-3 py-2 text-xs font-black text-white transition-all hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20">
@@ -173,8 +186,11 @@ export function Sidebar() {
                     </motion.div>
                 ) : (
                     <div className="flex flex-col items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] text-slate-500 font-bold border border-white/5">
-                            F
+                        <div className={cn(
+                            "h-8 w-8 rounded-lg flex items-center justify-center text-[10px] text-white font-black border border-white/5 bg-gradient-to-br",
+                            planInfo.color
+                        )}>
+                            {planInfo.name[0]}
                         </div>
                     </div>
                 )}

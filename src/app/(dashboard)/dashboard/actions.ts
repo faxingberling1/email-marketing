@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { geminiModel } from "@/lib/gemini";
+import { getCachedData, setCachedData } from "@/lib/cache";
 
 export async function getDashboardStats() {
     const session = await auth();
@@ -55,12 +57,16 @@ export async function getDashboardStats() {
             isForecast: i > 23 // Last 7 days are "forecast"
         }));
 
-        const peakEngagement = {
-            time: "4:00 PM EST",
-            segment: "Founders & CEOs",
-            confidence: "High",
-            reason: "Post-lunch synchronization window detected"
-        };
+        // Fetch AI Predictive Analytics dynamically based on user stats
+        const aiAnalyticsContext = `
+        Total Contacts: ${totalContacts}
+        Total Emails Sent: ${totalEmails}
+        Average Open Rate: ${openRate.toFixed(1)}%
+        Average Click Rate: ${clickRate.toFixed(1)}%
+        `;
+
+        const peakEngagement = await getPeakEngagement(aiAnalyticsContext, userId);
+        const aiPanelData = await getPredictiveAnalytics(aiAnalyticsContext, userId);
 
         return {
             user: { name: user?.name || session.user.email?.split('@')[0] || "User" },
@@ -128,32 +134,7 @@ export async function getDashboardStats() {
             })),
             trendData,
             peakEngagement,
-            aiPanel: {
-                growthForecast: "+12.4%",
-                activityHorizon: [
-                    "Waiting for incoming signal...",
-                    "Analyzing founder engagement patterns...",
-                    "Optimizing sequence cadence...",
-                ],
-                recommendations: [
-                    {
-                        id: 1,
-                        title: "High Saturation Detected",
-                        text: "Founder segment demonstrates high saturation. Retargeting via secondary sequence is predicted to yield +18% uplift.",
-                        uplift: "+18%",
-                        priority: "high",
-                        copyText: "Retarget founders with secondary sequence optimization."
-                    },
-                    {
-                        id: 2,
-                        title: "Optimal Send Window",
-                        text: "Next major sync window opens at 4:30 PM EST for the SaaS segment. Prepare dispatch for maximum visibility.",
-                        uplift: "+12%",
-                        priority: "medium",
-                        copyText: "Schedule SaaS segment dispatch for 4:30 PM EST."
-                    }
-                ]
-            },
+            aiPanel: aiPanelData,
             sequences: [
                 {
                     id: 'seq-1',
@@ -215,5 +196,99 @@ export async function getDashboardStats() {
     } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
         return null;
+    }
+}
+
+async function getPredictiveAnalytics(contextMetrics: string, userId: string) {
+    const cacheKey = `ai_analytics_${userId}`;
+    const cached = getCachedData<any>(cacheKey, 60 * 60 * 1000); // 1 hour TTL
+    if (cached) return cached;
+
+    try {
+        const systemInstruction = `You are a predictive analytics AI for an email marketing platform.
+        Based on the user's current metrics, generate actionable insights.
+        
+        Metrics:
+        ${contextMetrics}
+
+        Respond ONLY with a valid JSON object matching this structure EXACTLY:
+        {
+            "growthForecast": "string (e.g. +14.2% or -2.1%) representing predicted subscriber growth",
+            "activityHorizon": ["string 1", "string 2", "string 3"] (3 short phrases describing what the AI is analyzing right now),
+            "recommendations": [
+                {
+                    "id": number (e.g. 1),
+                    "title": "Short title",
+                    "text": "Detailed recommendation based on the metrics",
+                    "uplift": "string (e.g. +15%) predicted improvement",
+                    "priority": "high", "medium", or "low",
+                    "copyText": "A short, actionable command to copy"
+                }
+            ]
+        }
+        Do not include markdown codeblocks.`;
+
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
+        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const data = JSON.parse(cleanedJSON);
+        setCachedData(cacheKey, data);
+        return data;
+
+    } catch (error) {
+        console.error("Gemini AI Predictive Analytics Error:", error);
+        return {
+            growthForecast: "+12.4%",
+            activityHorizon: ["Optimizing delivery nodes...", "Surveilling engagement pulses...", "Neural link on standby"],
+            recommendations: [
+                {
+                    id: 1,
+                    title: "Subject Line Optimization",
+                    text: "AI detects a potential open rate increase of 12% by using curiosity-based subject lines for your 'Founder' segment.",
+                    uplift: "+12%",
+                    priority: "high",
+                    copyText: "Optimize 'Founder' subjects"
+                }
+            ]
+        };
+    }
+}
+
+async function getPeakEngagement(contextMetrics: string, userId: string) {
+    const cacheKey = `peak_engagement_${userId}`;
+    const cached = getCachedData<any>(cacheKey, 60 * 60 * 1000); // 1 hour TTL
+    if (cached) return cached;
+
+    try {
+        const systemInstruction = `You are a predictive analytics AI.
+        Based on these metrics: ${contextMetrics}
+        
+        Determine the absolute best "Peak Engagement" window for the next email campaign.
+        
+        Respond ONLY with a valid JSON object matching this EXACT structure:
+        {
+            "time": "e.g. Tuesday, 10:00 AM EST",
+            "segment": "The target segment (e.g. SaaS Founders)",
+            "confidence": "High, Medium, or Low",
+            "reason": "A one-sentence explanation for why this time is optimal"
+        }
+        Do not include markdown codeblocks.`;
+
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
+        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const data = JSON.parse(cleanedJSON);
+        setCachedData(cacheKey, data);
+        return data;
+    } catch (error) {
+        console.error("Gemini AI Peak Engagement Error:", error);
+        return {
+            time: "Tuesday, 10:00 AM EST",
+            segment: "Founders Segment",
+            confidence: "Medium",
+            reason: "Historical engagement pulses correlate with early-week professional active windows."
+        };
     }
 }

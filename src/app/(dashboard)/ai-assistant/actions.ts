@@ -1,37 +1,66 @@
 "use server"
 
+import { geminiModel } from "@/lib/gemini";
+
 // Mocking Intelligence Data Layer for AI Assistant
 // Ideally these would interface with LLM APIs
 
 export async function generateSubjectLines(prompt: string, segment: string) {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+        const systemInstruction = `You are an expert marketing copywriter. 
+        Generate 4 highly engaging email subject lines for the target audience: ${segment}.
+        The subject lines should be based on this instruction: ${prompt}
+        
+        Respond ONLY with a JSON array of objects. Each object must have:
+        - id (string, 1 to 4)
+        - text (the subject line)
+        - predictedOpenRate (a realistic percentage string, e.g. "45.2%")
+        - confidence (High, Optimal, Stable, or Neutral)
+        
+        Do not include markdown blocks.`;
 
-    return [
-        { id: '1', text: `🚀 Level up your ${segment} outreach today!`, predictedOpenRate: '48.5%', confidence: 'High' },
-        { id: '2', text: `Exclusive invitation for ${segment} decision makers`, predictedOpenRate: '42.2%', confidence: 'Optimal' },
-        { id: '3', text: `Optimizing your ${segment} workflow: New Insights`, predictedOpenRate: '38.8%', confidence: 'Stable' },
-        { id: '4', text: `Question about your ${segment} strategy?`, predictedOpenRate: '35.4%', confidence: 'Neutral' },
-    ];
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
+        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanedJSON);
+    } catch (error) {
+        console.error("Gemini AI Subject Generation Error:", error);
+        return [
+            { id: '1', text: `🚀 Level up your ${segment} outreach today!`, predictedOpenRate: '48.5%', confidence: 'High' }
+        ];
+    }
 }
 
 export async function generateEmailCopy(data: { prompt: string, tone: string, language: string, segment: string }) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+        const systemInstruction = `You are a world-class email marketing AI.
+        Generate the body copy for an email campaign based on these parameters:
+        Target Audience: ${data.segment}
+        Tone: ${data.tone}
+        Language: ${data.language}
+        Instructions: ${data.prompt}
+        
+        Provide ONLY the email body text. Do not include subject lines or extra formatting.`;
 
-    const greetings = {
-        'English': 'Hi there',
-        'Spanish': 'Hola',
-        'German': 'Hallo',
-        'French': 'Bonjour'
-    };
+        const result = await geminiModel.generateContent(systemInstruction);
+        const responseText = result.response.text();
 
-    const selectedGreeting = greetings[data.language as keyof typeof greetings] || 'Hi';
-
-    return {
-        id: Date.now().toString(),
-        content: `${selectedGreeting},\n\nI'm reaching out because our latest AI analysis shows a significant growth opportunity for ${data.segment}. Based on your current trajectory, we can help you achieve +25% efficiency...\n\nStay ahead of the curve,\nThe AI Orchestrator`,
-        language: data.language,
-        tone: data.tone
-    };
+        return {
+            id: Date.now().toString(),
+            content: responseText.trim(),
+            language: data.language,
+            tone: data.tone
+        };
+    } catch (error) {
+        console.error("Gemini AI Body Generation Error:", error);
+        return {
+            id: Date.now().toString(),
+            content: "Failed to generate copy. Please check API settings.",
+            language: data.language,
+            tone: data.tone
+        };
+    }
 }
 
 export async function getAIIntelligence() {

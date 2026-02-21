@@ -1,38 +1,55 @@
 "use server"
 
-// Settings Intelligence Layer
+import { auth } from "@/auth"
+import { prisma } from "@/lib/db"
 
 export async function getSettingsData() {
-    // Mocking configuration delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id }
+    })
+
+    if (!user) throw new Error("User not found")
+
+    const planMapping: Record<string, string> = {
+        starter: "Starter Plan",
+        growth: "Growth Plan",
+        pro: "Pro Plan",
+        enterprise: "Enterprise Plan",
+        free: "Free Plan"
+    }
+
+    const planName = planMapping[user.subscriptionPlan.toLowerCase()] || "Free Plan"
 
     return {
         profile: {
-            name: 'Commander Zah',
-            email: 'zah@antigravity.ai',
-            role: 'Tactical Director',
-            avatar: null
+            name: user.name || "User",
+            email: user.email,
+            role: "Marketing Director", // Placeholder or fetch if you have a role field
+            avatar: user.image
         },
         subscription: {
-            plan: 'Visionary Pro',
-            usage: 74,
-            nextBilling: 'March 20, 2026',
-            limit: '100,000 Contacts'
+            plan: planName,
+            usage: 42, // Mock for now until we have usage tracking
+            nextBilling: "March 20, 2026",
+            limit: user.subscriptionPlan === "pro" ? "200,000 Emails" : "10,000 Emails"
         },
         integrations: [
-            { id: 'i1', name: 'HubSpot CRM', status: 'Connected', lastSync: '12m ago' },
-            { id: 'i2', name: 'Slack Alerts', status: 'Active', lastSync: '2h ago' },
-            { id: 'i3', name: 'Twilio SMS', status: 'Pending', lastSync: 'Never' },
+            { id: "i1", name: "HubSpot CRM", status: "Connected", lastSync: "12m ago" },
+            { id: "i2", name: "Slack Alerts", status: "Active", lastSync: "2h ago" },
+            { id: "i3", name: "Twilio SMS", status: "Pending", lastSync: "Never" },
         ],
         aiPreferences: {
-            defaultLanguage: 'English',
-            defaultTone: 'Professional',
+            defaultLanguage: "English",
+            defaultTone: "Professional",
             engagementThreshold: 75,
             autoOptimize: true
         },
         domains: [
-            { domain: 'mg.antigravity.ai', status: 'Verified', spf: true, dkim: true },
-            { domain: 'mail.tactical.io', status: 'Attention Required', spf: true, dkim: false },
+            { domain: "mg.antigravity.ai", status: "Verified", spf: true, dkim: true },
+            { domain: "mail.tactical.io", status: "Attention Required", spf: true, dkim: false },
         ]
     };
 }

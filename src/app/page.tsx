@@ -2,7 +2,7 @@ import { LandingHeader } from "@/components/LandingHeader"
 import { LandingHero } from "@/components/LandingHero"
 import { FeatureGrid } from "@/components/FeatureGrid"
 import { HowItWorks } from "@/components/HowItWorks"
-import { PricingTable } from "@/components/PricingTable"
+import { PricingSection } from "@/components/PricingSection"
 import { Testimonials } from "@/components/Testimonials"
 import { CTASection, LandingFooter, TrustSection } from "@/components/LandingBlocks"
 
@@ -15,7 +15,7 @@ export default function LandingPage() {
         <FeatureGrid />
         <HowItWorks />
         <Testimonials />
-        <PricingTable />
+        <PricingSection />
         <TrustSection />
         <CTASection />
       </main>
