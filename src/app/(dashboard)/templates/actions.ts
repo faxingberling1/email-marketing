@@ -2,6 +2,13 @@
 
 // Template Intelligence Layer
 
+import {
+    RotateCcw,
+    Activity,
+    Target,
+    Sparkles
+} from "lucide-react"
+
 export async function getTemplates() {
     // Mocking creative synthesis delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -63,4 +70,12 @@ export async function optimizeTemplateLayout(templateId: string) {
 export async function saveTemplate(data: any) {
     await new Promise(resolve => setTimeout(resolve, 800));
     return { success: true, id: 't_new_' + Math.random().toString(36).substr(2, 9) };
+}
+export async function generateAIDraft(prompt: string, tone: string) {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return {
+        draft: `A highly-optimized copy draft generated for ${tone} audience based on: "${prompt}"`,
+        confidence: '94%',
+        engagementEstimate: '+12.5% Open Rate Lift'
+    };
 }

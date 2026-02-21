@@ -25,3 +25,15 @@ export function setCachedData<T>(key: string, data: T): void {
         timestamp: Date.now()
     });
 }
+
+export function deleteCachedData(key: string): void {
+    cache.delete(key);
+}
+
+export function clearUserCache(prefix: string): void {
+    for (const key of cache.keys()) {
+        if (key.startsWith(prefix)) {
+            cache.delete(key);
+        }
+    }
+}

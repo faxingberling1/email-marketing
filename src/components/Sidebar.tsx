@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 import {
     LayoutDashboard,
     Users,
@@ -28,26 +29,6 @@ import { useSidebar } from "./SidebarContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 
-const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Campaigns", href: "/campaigns", icon: Mail },
-    {
-        name: "Contacts",
-        href: "/contacts",
-        icon: Users,
-        badge: "12",
-        prioritized: true,
-        recommendation: "Founder segment hyper-engaged"
-    },
-    { name: "AI Assistant", href: "/ai-assistant", icon: BrainCircuit, badge: "New" },
-    { name: "Analytics", href: "/analytics", icon: BarChart3 },
-    { name: "Templates", href: "/templates", icon: Library },
-    { name: "Automation", href: "/automation", icon: Zap },
-    { name: "Billing", href: "/billing", icon: CreditCard },
-    { name: "Settings", href: "/settings", icon: Settings },
-    { name: "Help / Docs", href: "/help", icon: HelpCircle },
-]
-
 const adminNavigation = [
     { name: "Admin Home", href: "/admin", icon: Shield },
     { name: "Workspaces", href: "/admin/workspaces", icon: Building2 },
@@ -56,22 +37,55 @@ const adminNavigation = [
     { name: "AI Usage", href: "/admin/ai-usage", icon: BrainCircuit },
 ]
 
+import { getSidebarData } from "@/app/(dashboard)/sidebar-actions"
 
 export function Sidebar() {
     const pathname = usePathname()
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
     const { data: session } = useSession()
+    const [dynamicData, setDynamicData] = useState<any>(null)
 
-    const planMapping: Record<string, { name: string, color: string, limit: string, progress: string }> = {
-        starter: { name: "Starter Plan", color: "from-emerald-500 to-teal-500", limit: "10k", progress: "15%" },
-        growth: { name: "Growth Plan", color: "from-indigo-500 to-sky-500", limit: "50k", progress: "8%" },
-        pro: { name: "Pro Plan", color: "from-purple-500 to-indigo-500", limit: "200k", progress: "5%" },
-        enterprise: { name: "Enterprise Plan", color: "from-red-500 to-orange-500", limit: "Unlimited", progress: "2%" },
-        free: { name: "Free Plan", color: "from-slate-500 to-slate-400", limit: "1k", progress: "45%" }
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getSidebarData()
+            if (data) setDynamicData(data)
+        }
+        fetchData()
+        const interval = setInterval(fetchData, 30000) // Poll every 30s
+        return () => clearInterval(interval)
+    }, [])
+
+    const planMapping: Record<string, { name: string, color: string }> = {
+        starter: { name: "Starter Plan", color: "from-emerald-500 to-teal-500" },
+        growth: { name: "Growth Plan", color: "from-indigo-500 to-sky-500" },
+        pro: { name: "Pro Plan", color: "from-purple-500 to-indigo-500" },
+        enterprise: { name: "Enterprise Plan", color: "from-red-500 to-orange-500" },
+        free: { name: "Free Plan", color: "from-slate-500 to-slate-400" }
     }
 
-    const currentPlan = session?.user?.subscriptionPlan?.toLowerCase() || "free"
+    const currentPlan = dynamicData?.quotas?.plan?.toLowerCase() || session?.user?.subscriptionPlan?.toLowerCase() || "free"
     const planInfo = planMapping[currentPlan] || planMapping.free
+    const usagePercent = dynamicData?.quotas?.ai ? (dynamicData.quotas.ai.remaining / dynamicData.quotas.ai.limit) * 100 : 0
+
+    const navItems = [
+        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { name: "Campaigns", href: "/campaigns", icon: Mail, badge: dynamicData?.counts?.campaigns?.toString() },
+        {
+            name: "Contacts",
+            href: "/contacts",
+            icon: Users,
+            badge: dynamicData?.counts?.contacts?.toString(),
+            prioritized: (dynamicData?.counts?.contacts || 0) > 100,
+            recommendation: "Audience scaling detected"
+        },
+        { name: "AI Assistant", href: "/ai-assistant", icon: BrainCircuit, badge: "New" },
+        { name: "Analytics", href: "/analytics", icon: BarChart3 },
+        { name: "Templates", href: "/templates", icon: Library },
+        { name: "Automation", href: "/automation", icon: Zap },
+        { name: "Billing", href: "/billing", icon: CreditCard },
+        { name: "Settings", href: "/settings", icon: Settings },
+        { name: "Help / Docs", href: "/help", icon: HelpCircle },
+    ]
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-white/5 bg-slate-950 px-3 py-6 relative">
@@ -104,7 +118,7 @@ export function Sidebar() {
 
             {/* Navigation Section */}
             <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
-                {navigation.map((item) => {
+                {navItems.map((item) => {
                     const isActive = pathname === item.href
                     return (
                         <div key={item.name} className="relative group">
@@ -142,7 +156,7 @@ export function Sidebar() {
                                         className="flex w-full items-center justify-between"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="truncate font-bold tracking-wide">{item.name}</span>
+                                            <span className="truncate font-bold tracking-wide text-[13px]">{item.name}</span>
                                             {item.prioritized && (
                                                 <span className="text-[9px] text-indigo-400 font-black uppercase tracking-tighter -mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
                                                     {item.recommendation}
@@ -162,20 +176,16 @@ export function Sidebar() {
                                     </motion.div>
                                 )}
 
-                                {/* Priority Tooltip for Collapsed State */}
                                 {isCollapsed && item.prioritized && (
                                     <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(129,140,248,0.8)] border border-slate-950 animate-bounce" />
                                 )}
                             </Link>
-
-                            {/* Hover Neon Border Effect */}
-                            <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/0 to-transparent group-hover:via-indigo-500/50 transition-all duration-500" />
                         </div>
                     )
                 })}
 
                 {/* Admin Navigation */}
-                {session?.user?.global_role === "super_admin" && (
+                {dynamicData?.role === "super_admin" && (
                     <div className="mt-8 pt-6 border-t border-white/5 space-y-1">
                         {!isCollapsed && (
                             <div className="px-3 mb-2">
@@ -205,7 +215,6 @@ export function Sidebar() {
                                             <span className="font-bold tracking-wide">{item.name}</span>
                                         )}
                                     </Link>
-                                    <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-rose-500/0 to-transparent group-hover:via-rose-500/30 transition-all duration-500" />
                                 </div>
                             )
                         })}
@@ -222,21 +231,21 @@ export function Sidebar() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="rounded-2xl border border-white/5 bg-white/5 p-4"
                     >
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Current Plan</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Resource Pulse</p>
                         <div className="mt-2 flex items-center justify-between">
-                            <span className="text-sm font-bold text-white">{planInfo.name}</span>
-                            <span className="text-xs text-slate-500">Vol: {planInfo.limit}</span>
+                            <span className="text-sm font-bold text-white uppercase tracking-tighter">{planInfo.name}</span>
+                            <span className="text-[10px] text-slate-400 font-black">{dynamicData?.quotas?.ai?.remaining?.toLocaleString() || "..."} Credits</span>
                         </div>
                         <div className="mt-3 h-1 w-full rounded-full bg-slate-800 overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: planInfo.progress }}
-                                className={cn("h-full bg-gradient-to-r", planInfo.color)}
+                                animate={{ width: `${usagePercent}%` }}
+                                className={cn("h-full bg-gradient-to-r transition-all duration-1000", planInfo.color)}
                             />
                         </div>
-                        <button className="mt-4 w-full rounded-xl bg-indigo-600 px-3 py-2 text-xs font-black text-white transition-all hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20">
-                            Upgrade
-                        </button>
+                        <Link href="/billing" className="mt-4 block text-center w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-[10px] font-black text-white transition-all hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20 uppercase tracking-[0.2em]">
+                            Refuel Credits
+                        </Link>
                     </motion.div>
                 ) : (
                     <div className="flex flex-col items-center gap-2">
@@ -252,11 +261,11 @@ export function Sidebar() {
                 <button
                     onClick={() => signOut()}
                     className={cn(
-                        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-500",
+                        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-500 group",
                         isCollapsed && "justify-center px-2"
                     )}
                 >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
                     {!isCollapsed && <span>Log Out</span>}
                 </button>
             </div>
@@ -268,7 +277,7 @@ export function Sidebar() {
             {/* Desktop Sidebar */}
             <motion.aside
                 initial={false}
-                animate={{ width: isCollapsed ? 80 : 256 }}
+                animate={{ width: isCollapsed ? 80 : 264 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="hidden lg:block h-full overflow-hidden flex-shrink-0"
             >

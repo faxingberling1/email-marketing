@@ -17,9 +17,12 @@ import {
     Save,
     RotateCcw,
     Activity,
-    Target
+    Target,
+    Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+import { TemplateNeuralHUD } from "./TemplateNeuralHUD"
 
 interface Block {
     id: string
@@ -39,6 +42,7 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
         { id: '3', type: 'button', content: 'ACTIVATE ORBIT' }
     ])
     const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [showAI, setShowAI] = useState(false)
 
     const addBlock = (type: Block['type']) => {
         const newBlock: Block = {
@@ -65,9 +69,9 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
+        <div className="flex h-full gap-8 relative overflow-hidden">
             {/* Control HUD */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="w-80 shrink-0 space-y-6 flex flex-col h-full overflow-y-auto custom-scrollbar pr-2">
                 <div className="p-6 rounded-[2rem] border border-white/5 bg-slate-900/40 space-y-6">
                     <div className="flex items-center gap-2">
                         <Plus className="h-4 w-4 text-indigo-400" />
@@ -95,25 +99,30 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
                 </div>
 
                 <div className="p-6 rounded-[2rem] border border-indigo-500/10 bg-indigo-500/5 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-indigo-400" />
-                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Engagement Pre-Flight</h3>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-indigo-400" />
+                            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Resonance</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowAI(!showAI)}
+                            className="bg-indigo-500 p-1.5 rounded-lg text-white hover:scale-105 transition-transform"
+                        >
+                            <Sparkles className="h-3 w-3" />
+                        </button>
                     </div>
                     <div className="space-y-4 pt-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Focal Resonance</span>
-                            <span className="text-[10px] font-black text-emerald-400">OPTIMAL</span>
+                        <div className="flex items-center justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                            <span>Engagement Score</span>
+                            <span className="text-emerald-400 font-black">92%</span>
                         </div>
                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full w-[92%] bg-emerald-500" />
                         </div>
-                        <p className="text-[8px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
-                            <span className="text-indigo-400">AI Advice:</span> CTA placement is highly effective for SaaS founders.
-                        </p>
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 mt-auto">
                     <button className="flex items-center justify-center gap-3 bg-indigo-500 hover:bg-indigo-400 py-4 rounded-2xl text-[9px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all">
                         <Save className="h-4 w-4" /> COMMIT TO REPOSITORY
                     </button>
@@ -123,8 +132,8 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
                 </div>
             </div>
 
-            {/* Canvas */}
-            <div className="lg:col-span-3 rounded-[2.5rem] border border-white/5 bg-slate-950/20 p-12 relative overflow-y-auto custom-scrollbar">
+            {/* Canvas Area */}
+            <div className="flex-1 rounded-[2.5rem] border border-white/5 bg-slate-950/20 p-12 relative overflow-y-auto custom-scrollbar">
                 <div className="max-w-2xl mx-auto space-y-6">
                     <AnimatePresence>
                         {blocks.map((block) => (
@@ -188,6 +197,20 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
                     )}
                 </div>
             </div>
+
+            {/* AI HUD Drawer */}
+            <AnimatePresence>
+                {showAI && (
+                    <motion.div
+                        initial={{ x: 400, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 400, opacity: 0 }}
+                        className="w-96 shrink-0 h-full"
+                    >
+                        <TemplateNeuralHUD />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

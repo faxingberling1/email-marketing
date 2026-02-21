@@ -1,38 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { createPortalSession } from "@/app/(dashboard)/billing/actions"
-import { Loader2 } from "lucide-react"
+import { ExternalLink, ShieldCheck } from "lucide-react"
 
 export function ManageSubscriptionButtons() {
-    const [loading, setLoading] = useState(false)
-
-    const handleManage = async () => {
-        setLoading(true)
-        try {
-            const { url } = await createPortalSession()
-            if (url) window.location.href = url
-        } catch (error) {
-            console.error("Portal error:", error)
-            alert("No active subscription found. Please upgrade to a plan first.")
-        } finally {
-            setLoading(null as any)
-            setLoading(false)
-        }
-    }
-
     return (
-        <div className="flex flex-wrap items-center gap-4">
-            <button
-                onClick={handleManage}
-                disabled={loading}
-                className="px-8 py-4 bg-white text-slate-950 rounded-2xl font-black text-sm transition-all hover:bg-slate-200 active:scale-95 shadow-xl shadow-indigo-500/10 flex items-center gap-2"
-            >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Manage Subscription
+        <div className="flex flex-wrap gap-4">
+            <button className="flex items-center gap-3 bg-white text-slate-950 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-50 transition-all shadow-xl shadow-white/5">
+                Stripe Customer Portal <ExternalLink className="h-4 w-4" />
             </button>
-            <button className="px-6 py-4 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-sm transition-all hover:bg-white/10 active:scale-95">
-                View Usage History
+            <button className="flex items-center gap-3 bg-white/5 border border-white/10 text-slate-400 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-all">
+                Update Security <ShieldCheck className="h-4 w-4" />
             </button>
         </div>
     )

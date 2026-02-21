@@ -24,6 +24,9 @@ interface Contact {
     id: string
     name: string
     email: string
+    phone?: string
+    businessName?: string
+    tags?: string[]
     segment: string
     score: number
     activity: string
@@ -32,9 +35,11 @@ interface Contact {
 
 interface ContactTableProps {
     contacts: Contact[]
+    onDelete?: (id: string) => void
+    onMail?: (email: string) => void
 }
 
-export function ContactTable({ contacts = [] }: ContactTableProps) {
+export function ContactTable({ contacts = [], onDelete, onMail }: ContactTableProps) {
     const [searchTerm, setSearchTerm] = useState("")
     const [sortConfig, setSortConfig] = useState<{ key: keyof Contact; direction: 'asc' | 'desc' } | null>(null)
 
@@ -45,15 +50,17 @@ export function ContactTable({ contacts = [] }: ContactTableProps) {
         if (searchTerm) {
             result = result.filter(c =>
                 c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.email.toLowerCase().includes(searchTerm.toLowerCase())
+                c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                c.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                c.phone?.includes(searchTerm)
             )
         }
 
         // Sort
         if (sortConfig) {
             result.sort((a, b) => {
-                const aValue = a[sortConfig.key]
-                const bValue = b[sortConfig.key]
+                const aValue = a[sortConfig.key] ?? ""
+                const bValue = b[sortConfig.key] ?? ""
 
                 if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
                 if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
@@ -160,8 +167,29 @@ export function ContactTable({ contacts = [] }: ContactTableProps) {
                                                 <Target className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <p className="text-[12px] font-black text-white tracking-wide uppercase">{contact.name}</p>
-                                                <p className="text-[10px] font-bold text-slate-500 font-mono">{contact.email}</p>
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <p className="text-[12px] font-black text-white tracking-wide uppercase">{contact.name}</p>
+                                                    {contact.businessName && (
+                                                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20">
+                                                            {contact.businessName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="text-[10px] font-bold text-slate-500 font-mono">{contact.email}</p>
+                                                    {contact.phone && (
+                                                        <p className="text-[10px] font-bold text-slate-600 font-mono border-l border-white/10 pl-3">{contact.phone}</p>
+                                                    )}
+                                                </div>
+                                                {contact.tags && contact.tags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                                        {contact.tags.map(tag => (
+                                                            <span key={tag} className="text-[7px] px-1 py-0.5 rounded-full bg-slate-800 text-slate-400 font-bold border border-white/5 uppercase tracking-tighter">
+                                                                #{tag}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -208,10 +236,16 @@ export function ContactTable({ contacts = [] }: ContactTableProps) {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-indigo-400 hover:bg-white/10 transition-all">
+                                            <button
+                                                onClick={() => onMail?.(contact.email)}
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-indigo-400 hover:bg-white/10 transition-all"
+                                            >
                                                 <Mail className="h-3.5 w-3.5" />
                                             </button>
-                                            <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-rose-400 hover:bg-white/10 transition-all">
+                                            <button
+                                                onClick={() => onDelete?.(contact.id)}
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-rose-400 hover:bg-white/10 transition-all font-bold"
+                                            >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
                                             <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all">
@@ -229,13 +263,11 @@ export function ContactTable({ contacts = [] }: ContactTableProps) {
             {/* Table Footer */}
             <div className="p-4 border-t border-white/5 bg-white/[0.01] flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                 <div className="flex items-center gap-4">
-                    <span>Page 1 of 12</span>
-                    <div className="h-4 w-[1px] bg-white/5" />
-                    <span>Show 15 Per View</span>
+                    <span>Showing {filteredAndSortedContacts.length} Entities</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-emerald-400/60">Tactical Synchronization Complete</span>
+                    <span className="text-emerald-400/60 font-mono">Real-time Stream Active</span>
                 </div>
             </div>
         </div>

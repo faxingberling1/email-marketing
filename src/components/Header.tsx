@@ -2,18 +2,31 @@
 
 import { Bell, Search, Mail, Sparkles, ChevronDown, LogOut, Settings, CreditCard, Plus, Menu, Zap, TrendingUp, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { signOut } from "@/app/auth/actions"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "./SidebarContext"
 import Link from "next/link"
 
+import { getSidebarData } from "@/app/(dashboard)/sidebar-actions"
+
 export function Header() {
     const { data: session } = useSession()
     const { setIsMobileOpen } = useSidebar()
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const [isSearchFocused, setIsSearchFocused] = useState(false)
+    const [dynamicData, setDynamicData] = useState<any>(null)
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getSidebarData()
+            if (data) setDynamicData(data)
+        }
+        fetchData()
+        const interval = setInterval(fetchData, 30000)
+        return () => clearInterval(interval)
+    }, [])
 
     const userName = session?.user?.name || "User"
     const userEmail = session?.user?.email || ""
@@ -27,8 +40,9 @@ export function Header() {
         free: { name: "Free", color: "text-slate-500" }
     }
 
-    const currentPlan = session?.user?.subscriptionPlan?.toLowerCase() || "free"
+    const currentPlan = dynamicData?.quotas?.plan?.toLowerCase() || session?.user?.subscriptionPlan?.toLowerCase() || "free"
     const planInfo = planMapping[currentPlan] || planMapping.free
+    const notificationCount = dynamicData?.notifications?.length || 0
 
     const getTimeGreeting = () => {
         const hour = new Date().getHours()
@@ -68,27 +82,27 @@ export function Header() {
                         </div>
                     </div>
 
-                    <div className="h-4 w-[px] bg-white/10" />
+                    <div className="h-4 w-[1px] bg-white/10" />
 
                     {/* Architecture Status */}
                     <div className="group relative cursor-help">
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/5 border border-indigo-500/20 hover:border-indigo-500/40 transition-colors">
                             <Zap className="h-3 w-3 text-indigo-400" />
-                            <span className="font-black text-white">85% <span className="text-slate-500">OPTIMIZED</span></span>
+                            <span className="font-black text-white">85% <span className="text-slate-500 text-[8px] tracking-tighter ml-1">CORES ACTIVE</span></span>
                         </div>
 
                         {/* Tooltip */}
                         <div className="absolute top-full left-0 mt-2 w-48 opacity-0 group-hover:opacity-100 transition-all pointer-events-none translate-y-1 group-hover:translate-y-0 z-50">
                             <div className="rounded-xl border border-white/10 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-xl">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Pending Actions</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Neural Status</p>
                                 <div className="space-y-1.5">
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-300">
-                                        <div className="h-1 w-1 rounded-full bg-indigo-500" />
-                                        Verify SPF/DKIM
+                                    <div className="flex items-center justify-between text-[10px] text-slate-300">
+                                        <span>AI Usage</span>
+                                        <span className="text-indigo-400">{Math.round((dynamicData?.quotas?.ai?.remaining / dynamicData?.quotas?.ai?.limit) * 100 || 0)}%</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-300">
-                                        <div className="h-1 w-1 rounded-full bg-indigo-500" />
-                                        Sync Contact Intel
+                                    <div className="flex items-center justify-between text-[10px] text-slate-300">
+                                        <span>Delivery</span>
+                                        <span className="text-emerald-400">Stable</span>
                                     </div>
                                 </div>
                             </div>
@@ -109,16 +123,11 @@ export function Header() {
                     )} />
                     <input
                         type="text"
-                        placeholder="Search campaigns, contacts, templates..."
+                        placeholder="Search intel..."
                         onFocus={() => setIsSearchFocused(true)}
                         onBlur={() => setIsSearchFocused(false)}
-                        className="h-10 w-full rounded-xl border border-white/5 bg-white/5 pl-10 pr-4 text-xs text-white placeholder-slate-500 transition-all focus:bg-white/10 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                        className="h-10 w-full rounded-xl border border-white/5 bg-white/5 pl-10 pr-4 text-[11px] text-white placeholder-slate-500 transition-all focus:bg-white/10 focus:border-indigo-500/50 focus:outline-none"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <kbd className="hidden sm:inline-block rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                            ⌘ K
-                        </kbd>
-                    </div>
                 </div>
             </div>
 
@@ -134,46 +143,45 @@ export function Header() {
                 <div className="relative group/notif">
                     <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-400 transition-all hover:bg-white/10 hover:text-white group">
                         <Bell className="h-5 w-5 group-hover:rotate-12 transition-transform" />
-                        <span className="absolute right-2.5 top-2.5 flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
-                        </span>
+                        {notificationCount > 0 && (
+                            <span className="absolute right-2.5 top-2.5 flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                            </span>
+                        )}
                     </button>
 
                     {/* Notifications Dropdown */}
                     <div className="absolute right-0 mt-2 w-80 opacity-0 group-hover/notif:opacity-100 transition-all pointer-events-none group-hover/notif:pointer-events-auto translate-y-2 group-hover/notif:translate-y-0 z-50">
                         <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl">
                             <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Intelligence Feed</h4>
-                                <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold">2 NEW</span>
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Platform Feed</h4>
+                                <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold">{notificationCount} NEW</span>
                             </div>
-                            <div className="space-y-3">
-                                <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 transition-colors cursor-pointer">
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-indigo-600/20 flex items-center justify-center text-indigo-400">
-                                            <Sparkles className="h-4 w-4" />
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto no-scrollbar">
+                                {dynamicData?.notifications?.length > 0 ? (
+                                    dynamicData.notifications.map((notif: any) => (
+                                        <div key={notif.id} className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 transition-colors cursor-pointer group/item">
+                                            <div className="flex items-start gap-3">
+                                                <div className={cn(
+                                                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                                                    notif.type === 'error' ? "bg-rose-500/20 text-rose-400" : "bg-indigo-600/20 text-indigo-400"
+                                                )}>
+                                                    <Sparkles className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-bold text-white mb-0.5 group-hover/item:text-indigo-300 transition-colors capitalize">{notif.title}</p>
+                                                    <p className="text-[10px] text-slate-400 leading-tight">{notif.desc}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-white mb-0.5">High Engagement Alert</p>
-                                            <p className="text-[10px] text-slate-400 leading-tight">Founder segment shows 42% higher open rate. Deploy secondary sequence?</p>
-                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6">
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">No new intelligence</p>
                                     </div>
-                                </div>
-                                <div className="p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-8 w-8 rounded-lg bg-emerald-600/20 flex items-center justify-center text-emerald-400">
-                                            <TrendingUp className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-white mb-0.5">Architecture Optimized</p>
-                                            <p className="text-[10px] text-slate-400 leading-tight">Domain verification complete. AI Engine now primed for 100k+ bursts.</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                )}
                             </div>
-                            <button className="w-full mt-4 py-2 text-[10px] font-black text-slate-500 hover:text-white transition-colors border-t border-white/5 pt-3">
-                                VIEW ALL INTELLIGENCE
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -189,13 +197,13 @@ export function Header() {
                                 {userInitial}
                             </div>
                         </div>
-                        <div className="hidden lg:flex flex-col items-start">
-                            <span className="text-xs font-bold text-white leading-none mb-0.5">{userName}</span>
+                        <div className="hidden lg:flex flex-col items-start text-left">
+                            <span className="text-xs font-bold text-white leading-none mb-0.5 max-w-[100px] truncate">{userName}</span>
                             <span className={cn(
                                 "text-[10px] font-black uppercase tracking-widest",
                                 planInfo.color
                             )}>
-                                {planInfo.name} Plan
+                                {planInfo.name}
                             </span>
                         </div>
                         <ChevronDown className={cn(
@@ -228,7 +236,7 @@ export function Header() {
                                             <Settings className="h-4 w-4" />
                                             Account Settings
                                         </Link>
-                                        {session?.user?.global_role === "super_admin" && (
+                                        {dynamicData?.role === "super_admin" && (
                                             <Link
                                                 href="/admin"
                                                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 transition-all hover:bg-rose-500/20"
@@ -239,7 +247,7 @@ export function Header() {
                                             </Link>
                                         )}
                                         <Link
-                                            href="/settings"
+                                            href="/billing"
                                             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
                                             onClick={() => setIsProfileOpen(false)}
                                         >

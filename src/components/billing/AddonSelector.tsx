@@ -1,77 +1,54 @@
 "use client"
 
 import { useState } from "react"
-import { Zap, Loader2 } from "lucide-react"
-import { createAddonCheckoutSession } from "@/app/(dashboard)/billing/actions"
+import { Zap, ShoppingCart, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-interface AddonTier {
-    credits: number
-    price: number
-    desc: string
-    best?: boolean
-}
+const ADDONS = [
+    { id: 'ai_100', name: '100 AI Credits', price: '$10', desc: 'Short-term tactical capacity.' },
+    { id: 'ai_500', name: '500 AI Credits', price: '$45', desc: 'Standard monthly orchestration.' },
+    { id: 'ai_2000', name: '2,000 AI Credits', price: '$150', desc: 'Pro-level neural volume.' },
+]
 
 export function AddonSelector() {
-    const [loading, setLoading] = useState<number | null>(null)
+    const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
 
-    const tiers: AddonTier[] = [
-        { credits: 500, price: 10, desc: "Neural allocation boost for creators." },
-        { credits: 2000, price: 35, desc: "High-capacity brainpower for marketers." },
-        { credits: 5000, price: 75, desc: "Maximum intelligence for enterprises.", best: true },
-    ]
-
-    const handlePurchase = async (tier: AddonTier, index: number) => {
-        setLoading(index)
-        try {
-            const { url } = await createAddonCheckoutSession(tier.credits, tier.price)
-            if (url) window.location.href = url
-        } catch (error) {
-            console.error("Purchase error:", error)
-            alert("Failed to initiate checkout. Please try again.")
-        } finally {
-            setLoading(null)
-        }
+    const handlePurchase = (id: string) => {
+        setIsPurchasing(id)
+        setTimeout(() => setIsPurchasing(null), 2000)
     }
 
     return (
         <div className="space-y-4">
-            {tiers.map((add, i) => (
+            {ADDONS.map((addon) => (
                 <div
-                    key={add.credits}
-                    className="group relative flex items-center justify-between p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-amber-500/30 transition-all"
+                    key={addon.id}
+                    className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-amber-500/30 transition-all group"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                            <Zap className="h-5 w-5 text-amber-500" />
+                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20 transition-all group-hover:bg-amber-500 group-hover:text-white">
+                            <Zap className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="text-sm font-black text-white mb-1 tracking-tight">
-                                {add.credits.toLocaleString()} Credits
-                            </div>
-                            <p className="text-[10px] text-slate-500 font-bold">{add.desc}</p>
+                            <div className="text-sm font-black text-white mb-0.5 tracking-tight uppercase">{addon.name}</div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{addon.desc}</p>
                         </div>
                     </div>
 
                     <div className="text-right">
-                        <div className="text-lg font-black text-white mb-2">${add.price}</div>
+                        <div className="text-lg font-black text-white mb-2">{addon.price}</div>
                         <button
-                            disabled={loading !== null}
-                            onClick={() => handlePurchase(add, i)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => handlePurchase(addon.id)}
+                            disabled={!!isPurchasing}
+                            className="px-5 py-2.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white transition-all disabled:opacity-50"
                         >
-                            {loading === i ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                                "Purchase"
+                            {isPurchasing === addon.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                                <span className="flex items-center gap-2">
+                                    PURCHASE <ShoppingCart className="h-3 w-3" />
+                                </span>
                             )}
                         </button>
                     </div>
-
-                    {add.best && (
-                        <span className="absolute -top-2 left-4 px-2 py-0.5 bg-amber-500 text-slate-950 text-[8px] font-black uppercase tracking-widest rounded-md">
-                            Best Value
-                        </span>
-                    )}
                 </div>
             ))}
         </div>

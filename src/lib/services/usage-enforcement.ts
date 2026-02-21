@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getTierLimits } from "@/lib/tiers";
+import { getTierLimits, SubscriptionTier } from "@/lib/tiers";
 
 export interface UsageCheck {
     allowed: boolean;
@@ -7,6 +7,23 @@ export interface UsageCheck {
     limit: number;
     reason?: string;
     code?: string;
+}
+
+export interface WorkspaceQuotas {
+    plan: SubscriptionTier;
+    ai: UsageCheck;
+    emails: UsageCheck;
+    contacts: UsageCheck;
+    automation: {
+        allowed: boolean;
+        workflowsUsed: number;
+        limit: number;
+    };
+    features: {
+        abTesting: boolean;
+        predictiveAnalytics: boolean;
+        customBranding: boolean;
+    };
 }
 
 /**
@@ -26,6 +43,58 @@ async function getWorkspaceUsage(workspaceId: string) {
 
     if (!ws) throw new Error("Workspace not found");
     return ws;
+}
+
+/**
+ * Aggregates all quotas for a workspace.
+ */
+export async function getWorkspaceQuotas(workspaceId: string): Promise<WorkspaceQuotas> {
+    const ws = await getWorkspaceUsage(workspaceId);
+    const limits = getTierLimits(ws.subscription_plan);
+
+    const contactCount = await prisma.contact.count({
+        where: { user: { workspaceId } }
+    });
+
+    const workflowCount = await prisma.campaign.count({
+        where: {
+            userId: {
+                in: (await prisma.user.findMany({
+                    where: { workspaceId },
+                    select: { id: true }
+                })).map(u => u.id)
+            }, type: "AUTOMATION"
+        } as any
+    });
+
+    return {
+        plan: ws.subscription_plan as SubscriptionTier,
+        ai: {
+            allowed: ws.ai_credits_remaining > 0,
+            remaining: ws.ai_credits_remaining,
+            limit: limits.ai_credits_per_month
+        },
+        emails: {
+            allowed: ws.email_limit_remaining > 0,
+            remaining: ws.email_limit_remaining,
+            limit: limits.emails_per_month
+        },
+        contacts: {
+            allowed: contactCount < limits.contacts,
+            remaining: Math.max(0, limits.contacts - contactCount),
+            limit: limits.contacts
+        },
+        automation: {
+            allowed: workflowCount < limits.automation_workflows,
+            workflowsUsed: workflowCount,
+            limit: limits.automation_workflows
+        },
+        features: {
+            abTesting: limits.features.ab_testing,
+            predictiveAnalytics: limits.features.predictive_analytics,
+            customBranding: limits.features.custom_branding
+        }
+    };
 }
 
 /**
@@ -66,24 +135,13 @@ export async function checkEmailLimit(workspaceId: string, recipientCount: numbe
  * Checks if a workspace can add more contacts.
  */
 export async function checkContactLimit(workspaceId: string, newContactCount: number = 1): Promise<UsageCheck> {
-    const ws = await prisma.workspace.findUnique({
-        where: { id: workspaceId },
-        select: { subscription_plan: true } as any
-    }) as any;
-
-    if (!ws) throw new Error("Workspace not found");
-
-    const currentContacts = await prisma.contact.count({
-        where: { user: { workspaceId } }
-    });
-
-    const limits = getTierLimits(ws.subscription_plan as any);
-    const allowed = (currentContacts + newContactCount) <= limits.contacts;
+    const quotas = await getWorkspaceQuotas(workspaceId);
+    const allowed = (quotas.contacts.limit - quotas.contacts.remaining + newContactCount) <= quotas.contacts.limit;
 
     return {
         allowed,
-        remaining: limits.contacts - currentContacts,
-        limit: limits.contacts,
+        remaining: quotas.contacts.remaining,
+        limit: quotas.contacts.limit,
         reason: allowed ? undefined : "Contact limit reached for your current plan.",
         code: "CONTACT_LIMIT_REACHED"
     };

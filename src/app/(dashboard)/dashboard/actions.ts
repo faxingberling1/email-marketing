@@ -3,7 +3,13 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { getDynamicModel } from "@/lib/gemini";
+import { MetricCard } from "@/components/MetricCard"
+import { EngagementChart } from "@/components/EngagementChart"
+import { AIPanel } from "@/components/AIPanel"
+import { QuotaAlert } from "@/components/shared/QuotaAlert"
 import { getCachedData, setCachedData } from "@/lib/cache";
+import { getWorkspaceQuotas } from "@/lib/services/usage-enforcement";
+import { getTierLimits } from "@/lib/tiers";
 
 export async function getDashboardStats() {
     const session = await auth();
@@ -51,6 +57,8 @@ export async function getDashboardStats() {
         ]);
 
         const ws = user?.workspace as any;
+        const limits = getTierLimits(ws?.subscription_plan || 'free');
+
         const openRate = totalEmails > 0 ? (openedEmails / totalEmails) * 100 : 0;
         const clickRate = totalEmails > 0 ? (clickedEmails / totalEmails) * 100 : 0;
 
@@ -90,7 +98,12 @@ export async function getDashboardStats() {
                     icon: 'Users',
                     sparkline: [30, 45, 35, 50, 48, 60, 55],
                     aiSuggestion: "Growth accelerating. Segment imports recommended.",
-                    status: 'success'
+                    status: 'success',
+                    progressBar: {
+                        current: totalContacts,
+                        total: limits.contacts,
+                        label: 'Audience Limit'
+                    }
                 },
                 {
                     name: 'Emails Sent',
@@ -99,12 +112,12 @@ export async function getDashboardStats() {
                     icon: 'Send',
                     sparkline: [20, 30, 25, 40, 35, 50, 45],
                     aiSuggestion: "Volume optimal. Delivery rates stable.",
-                    status: 'success',
-                    progressBar: ws ? {
-                        current: ws.total_emails_sent,
-                        total: ws.email_limit_remaining + ws.total_emails_sent,
+                    status: (ws?.total_emails_sent / limits.emails_per_month) > 0.9 ? 'danger' : 'success',
+                    progressBar: {
+                        current: ws?.total_emails_sent || 0,
+                        total: limits.emails_per_month,
                         label: 'Monthly Limit'
-                    } : undefined
+                    }
                 },
                 {
                     name: 'Avg. Open Rate',
@@ -113,16 +126,7 @@ export async function getDashboardStats() {
                     icon: 'TrendingUp',
                     sparkline: [45, 42, 40, 38, 35, 36, 34],
                     aiSuggestion: "Open rate low → Optimize subject lines with AI.",
-                    status: 'warning'
-                },
-                {
-                    name: 'Click Rate',
-                    value: `${clickRate.toFixed(1)}%`,
-                    change: '+2%',
-                    icon: 'MousePointer2',
-                    sparkline: [12, 14, 13, 15, 14, 16, 17],
-                    aiSuggestion: "Click momentum detected. Add CTA variants.",
-                    status: 'success'
+                    status: openRate < 20 ? 'danger' : openRate < 35 ? 'warning' : 'success'
                 },
                 {
                     name: 'AI Credits Remaining',
@@ -131,12 +135,12 @@ export async function getDashboardStats() {
                     icon: 'Zap',
                     sparkline: [100, 95, 90, 85, 80, 75, 70],
                     aiSuggestion: "Usage high → Autopilot mode engaged.",
-                    status: (ws?.ai_credits_remaining || 0) < 50 ? 'warning' : 'success',
-                    progressBar: ws ? {
-                        current: ws.total_ai_used,
-                        total: ws.ai_credits_remaining + ws.total_ai_used,
+                    status: (ws?.ai_credits_remaining || 0) < 50 ? 'danger' : (ws?.ai_credits_remaining || 0) < 200 ? 'warning' : 'success',
+                    progressBar: {
+                        current: ws?.total_ai_used || 0,
+                        total: (ws?.ai_credits_remaining || 0) + (ws?.total_ai_used || 0),
                         label: 'Credits Used'
-                    } : undefined
+                    }
                 },
             ],
             recentCampaigns: recentCampaigns.map((c: any) => {

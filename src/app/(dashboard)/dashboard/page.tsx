@@ -28,6 +28,7 @@ import { EngagementChart } from "@/components/EngagementChart"
 import { AIPanel } from "@/components/AIPanel"
 import { CommandButtons } from "@/components/CommandButtons"
 import { CampaignTable } from "@/components/CampaignTable"
+import { QuotaAlert } from "@/components/shared/QuotaAlert"
 import { SequenceFlow } from "@/components/SequenceFlow"
 import { TemplateLibrary } from "@/components/TemplateLibrary"
 
@@ -71,6 +72,13 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-8 pb-12">
+            <QuotaAlert
+                type="ai"
+                remaining={data?.quotas?.ai?.remaining || 0}
+                limit={(data?.quotas?.ai?.remaining || 0) + (data?.quotas?.ai?.used || 0)}
+                plan={data?.quotas?.plan || 'free'}
+            />
+
             {/* Header Status Bar (Sub-header) */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}

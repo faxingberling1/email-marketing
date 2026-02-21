@@ -61,6 +61,15 @@ export function MetricCard({
             onMouseLeave={() => setIsHovered(false)}
             className="group relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 p-6 backdrop-blur-sm transition-all hover:border-indigo-500/30 hover:bg-slate-900/80"
         >
+            {/* Danger Pulse - Only if status is danger */}
+            {status === 'danger' && (
+                <motion.div
+                    animate={{ opacity: [0, 0.2, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 bg-rose-500 pointer-events-none"
+                />
+            )}
+
             {/* Background Accent */}
             <div className={cn(
                 "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none",
@@ -74,7 +83,8 @@ export function MetricCard({
                 <div className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300",
                     status === 'success' ? "bg-emerald-500/10 text-emerald-400" : status === 'warning' ? "bg-amber-500/10 text-amber-400" : "bg-rose-500/10 text-rose-400",
-                    "group-hover:scale-110 group-hover:rotate-3"
+                    "group-hover:scale-110 group-hover:rotate-3",
+                    status === 'danger' && "animate-pulse"
                 )}>
                     <Icon className="h-4 w-4" />
                 </div>
@@ -87,19 +97,21 @@ export function MetricCard({
                     </h3>
 
                     {progressBar ? (
-                        <div className="mt-4 space-y-1.5 pr-8">
+                        <div className="mt-4 space-y-1.5 pr-4">
                             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
                                 <span>{progressBar.label}</span>
-                                <span>{Math.round(progressPerc)}%</span>
+                                <span className={cn(progressPerc > 90 ? "text-rose-400" : "text-slate-400")}>
+                                    {progressBar.current.toLocaleString()} / {progressBar.total.toLocaleString()}
+                                </span>
                             </div>
-                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progressPerc}%` }}
                                     transition={{ duration: 1.5, ease: "circOut" }}
                                     className={cn(
                                         "h-full rounded-full",
-                                        progressPerc > 90 ? "bg-rose-500" : progressPerc > 70 ? "bg-amber-500" : "bg-indigo-500"
+                                        progressPerc > 95 ? "bg-rose-500" : progressPerc > 75 ? "bg-amber-500" : "bg-indigo-500"
                                     )}
                                 />
                             </div>
@@ -143,7 +155,7 @@ export function MetricCard({
 
             {/* AI Suggestion Area */}
             <AnimatePresence>
-                {isHovered && (
+                {(isHovered || status === 'danger') && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -153,9 +165,10 @@ export function MetricCard({
                         <div className="mt-4 pt-4 border-t border-white/5 flex gap-2">
                             <div className={cn(
                                 "flex-shrink-0 h-4 w-4 rounded bg-indigo-500/10 flex items-center justify-center text-indigo-400",
-                                status === 'warning' && "bg-amber-500/10 text-amber-400"
+                                status === 'warning' && "bg-amber-500/10 text-amber-400",
+                                status === 'danger' && "bg-rose-500/10 text-rose-400"
                             )}>
-                                {status === 'warning' ? <AlertCircle className="h-2.5 w-2.5" /> : <Sparkles className="h-2.5 w-2.5" />}
+                                {status === 'warning' ? <AlertCircle className="h-2.5 w-2.5" /> : status === 'danger' ? <AlertCircle className="h-2.5 w-2.5 animate-bounce" /> : <Sparkles className="h-2.5 w-2.5" />}
                             </div>
                             <p className="text-[9px] font-bold text-slate-400 leading-tight italic">
                                 AI: {aiSuggestion}

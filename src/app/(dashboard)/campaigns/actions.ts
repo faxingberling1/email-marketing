@@ -8,11 +8,12 @@ import { getTierLimits } from "@/lib/tiers";
 // Real DB Action
 export async function createCampaign(data: {
     name: string;
-    subject: string;
-    segment: string;
-    segmentCount: number;
-    content: string;
-    status: string;
+    description?: string;
+    senderEmail?: string;
+    type: string;
+    templateId: string;
+    audienceId: string;
+    config: any;
 }) {
     try {
         const session = await auth();
@@ -49,8 +50,9 @@ export async function createCampaign(data: {
             };
         }
 
-        // 3. Check Email Volume Limit
-        const usage = await checkEmailLimit(workspaceId, data.segmentCount);
+        // 3. Check Email Volume Limit (Mocking segment count for now)
+        const segmentCount = 1000;
+        const usage = await checkEmailLimit(workspaceId, segmentCount);
         if (!usage.allowed) {
             return {
                 success: false,
@@ -64,13 +66,13 @@ export async function createCampaign(data: {
                 data: {
                     userId,
                     name: data.name,
-                    subject: data.subject,
-                    aiContent: data.content,
-                    status: data.status,
+                    subject: "DRAFT SUBJECT",
+                    aiContent: "DRAFT CONTENT",
+                    status: "DRAFT",
                 }
             });
 
-            await consumeEmailCredits(workspaceId, data.segmentCount);
+            await consumeEmailCredits(workspaceId, segmentCount);
 
             return newCampaign;
         });
