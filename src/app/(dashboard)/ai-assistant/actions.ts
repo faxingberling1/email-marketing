@@ -1,6 +1,6 @@
 "use server"
 
-import { geminiModel } from "@/lib/gemini";
+import { getDynamicModel } from "@/lib/gemini";
 
 // Mocking Intelligence Data Layer for AI Assistant
 // Ideally these would interface with LLM APIs
@@ -19,7 +19,8 @@ export async function generateSubjectLines(prompt: string, segment: string) {
         
         Do not include markdown blocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -43,7 +44,8 @@ export async function generateEmailCopy(data: { prompt: string, tone: string, la
         
         Provide ONLY the email body text. Do not include subject lines or extra formatting.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
 
         return {

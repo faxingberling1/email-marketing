@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma Schema — MailMind SaaS
+// Updated: Super Admin system + full workspace/audit models
 
 generator client {
   provider = "prisma-client-js"
@@ -10,47 +10,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  password          String?   // Hashed password for Credentials provider
-  name              String?
-  image             String?   // Added for NextAuth compatibility
-  emailVerified     DateTime? // Added for NextAuth compatibility
-  onboardingCompleted Boolean @default(false)
-  subscriptionPlan  String    @default("free")
-  stripeCustomerId  String?   @unique
-  workspaceId       String?
-  workspace         Workspace? @relation(fields: [workspaceId], references: [id])
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  accounts          Account[]
-  sessions          Session[]
-  contacts          Contact[]
-  campaigns         Campaign[]
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum GlobalRole {
+  user
+  super_admin
 }
 
-model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum WorkspaceRole {
+  owner
+  admin
+  marketer
+  viewer
+}
+
+enum WorkspaceHealthStatus {
+  healthy
+  warning
+  restricted
+  suspended
+}
+
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  unpaid
+}
+
+// ─── Core Auth Models ─────────────────────────────────────────────────────────
+
+model User {
+  id                  String     @id @default(cuid())
+  email               String     @unique
+  password            String?                          // Hashed — Credentials provider
+  name                String?
+  image               String?
+  emailVerified       DateTime?
+  auth_provider       String     @default("credentials")
+
+  // Admin fields
+  global_role         GlobalRole @default(user)
+  is_suspended        Boolean    @default(false)
+
+  // Legacy fields (kept for compatibility)
+  onboardingCompleted Boolean    @default(false)
+  subscriptionPlan    String     @default("free")
+  stripeCustomerId    String?    @unique
+
+  // Workspace (legacy single-workspace link)
+  workspaceId         String?
+  workspace           Workspace? @relation("WorkspacePrimaryUsers", fields: [workspaceId], references: [id])
+
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relations
+  accounts            Account[]
+  sessions            Session[]
+  contacts            Contact[]
+  campaigns           Campaign[]
+  workspaceMemberships WorkspaceMember[]
+  ownedWorkspaces     Workspace[] @relation("WorkspaceOwner")
+  auditLogsActed      AuditLog[]  @relation("AuditLogActor")
+  settingsUpdated     SystemSetting[] @relation("SettingUpdater")
+
+  @@index([global_role])
+  @@index([is_suspended])
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -73,6 +115,104 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ─── Workspace ────────────────────────────────────────────────────────────────
+
+model Workspace {
+  id                   String                @id @default(cuid())
+  name                 String
+
+  // Ownership
+  ownerId              String?
+  owner                User?                 @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+
+  // Subscription
+  subscription_plan    String                @default("free")
+  subscription_status  SubscriptionStatus    @default(trialing)
+
+  // Usage counters
+  ai_credits_remaining Int                   @default(100)
+  email_limit_remaining Int                  @default(500)
+  total_ai_used        Int                   @default(0)
+  total_emails_sent    Int                   @default(0)
+
+  // Health
+  health_status        WorkspaceHealthStatus @default(healthy)
+
+  // Soft delete
+  deleted_at           DateTime?
+
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  // Relations
+  users                User[]                @relation("WorkspacePrimaryUsers")
+  members              WorkspaceMember[]
+  aiUsageLogs          AiUsageLog[]
+
+  @@index([health_status])
+  @@index([subscription_status])
+  @@index([deleted_at])
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole @default(viewer)
+  createdAt   DateTime      @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+// ─── Audit & Monitoring ───────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  actor       User     @relation("AuditLogActor", fields: [actorId], references: [id])
+  action_type String                // e.g. WORKSPACE_SUSPENDED, USER_PROMOTED
+  target_type String                // e.g. "workspace", "user"
+  target_id   String
+  metadata    Json?                 // arbitrary JSON payload
+  created_at  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action_type])
+  @@index([target_id])
+  @@index([created_at])
+}
+
+model AiUsageLog {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  model_used   String
+  tokens_used  Int       @default(0)
+  cost_estimate Float    @default(0)
+  created_at   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@index([created_at])
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique               // e.g. "default_ai_credits", "maintenance_mode"
+  value       String                         // Stored as string, parsed by consumer
+  type        String   @default("string")    // "string", "number", "boolean", "json"
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedById String
+  updatedBy   User     @relation("SettingUpdater", fields: [updatedById], references: [id])
+
+  @@index([updatedById])
+}
+
+// ─── Email Marketing Models ───────────────────────────────────────────────────
+
 model Contact {
   id              String   @id @default(cuid())
   userId          String
@@ -89,18 +229,18 @@ model Contact {
 }
 
 model Campaign {
-  id                 String    @id @default(cuid())
-  userId             String
-  user               User      @relation(fields: [userId], references: [id])
-  name               String
-  subject            String?
-  aiContent          String?   @db.Text
-  scheduleTime       DateTime?
-  status             String    @default("draft") // draft, scheduled, sending, completed
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  emails             Email[]
-  sequences          Sequence[]
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  name         String
+  subject      String?
+  aiContent    String?    @db.Text
+  scheduleTime DateTime?
+  status       String     @default("draft")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  emails       Email[]
+  sequences    Sequence[]
 }
 
 model Email {
@@ -109,7 +249,7 @@ model Email {
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   contactId  String
   contact    Contact  @relation(fields: [contactId], references: [id])
-  status     String   @default("pending") // pending, sent, opened, clicked, bounced
+  status     String   @default("pending")
   sentAt     DateTime?
   opened     Boolean  @default(false)
   clicked    Boolean  @default(false)
@@ -117,12 +257,12 @@ model Email {
 }
 
 model Sequence {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   campaignId   String
-  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  campaign     Campaign @relation(fields: [campaignId], references: [id])
   stepNumber   Int
   triggerEvent String
-  aiContent    String?   @db.Text
-  delayTime    Int       @default(0) // minutes
-  createdAt    DateTime  @default(now())
+  aiContent    String?  @db.Text
+  delayTime    Int      @default(0)
+  createdAt    DateTime @default(now())
 }

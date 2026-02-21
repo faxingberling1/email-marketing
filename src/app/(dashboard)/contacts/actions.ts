@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { geminiModel } from "@/lib/gemini";
+import { getDynamicModel } from "@/lib/gemini";
 import { getCachedData, setCachedData } from "@/lib/cache";
 
 export async function getContactsData(searchTerm: string = "") {
@@ -120,7 +120,8 @@ export async function identifyAtRiskContacts() {
         ]
         Do not include markdown codeblocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -178,7 +179,8 @@ async function analyzeContactsEngagement(contextString: string, userId: string, 
         }
         Do not include markdown or explanations.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 

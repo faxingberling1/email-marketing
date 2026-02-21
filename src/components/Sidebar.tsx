@@ -15,8 +15,12 @@ import {
     LogOut,
     ChevronLeft,
     Menu,
-    X
+    X,
+    Shield,
+    Building2,
+    Lock
 } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 import { signOut } from "@/app/auth/actions"
 import { useSidebar } from "./SidebarContext"
@@ -41,6 +45,15 @@ const navigation = [
     { name: "Settings", href: "/settings", icon: Settings },
     { name: "Help / Docs", href: "/help", icon: HelpCircle },
 ]
+
+const adminNavigation = [
+    { name: "Admin Home", href: "/admin", icon: Shield },
+    { name: "Workspaces", href: "/admin/workspaces", icon: Building2 },
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Audit Logs", href: "/admin/audit-logs", icon: BarChart3 },
+    { name: "AI Usage", href: "/admin/ai-usage", icon: BrainCircuit },
+]
+
 
 export function Sidebar() {
     const pathname = usePathname()
@@ -158,7 +171,46 @@ export function Sidebar() {
                         </div>
                     )
                 })}
+
+                {/* Admin Navigation */}
+                {session?.user?.global_role === "super_admin" && (
+                    <div className="mt-8 pt-6 border-t border-white/5 space-y-1">
+                        {!isCollapsed && (
+                            <div className="px-3 mb-2">
+                                <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Administrative</span>
+                            </div>
+                        )}
+                        {adminNavigation.map((item) => {
+                            const isActive = pathname === item.href
+                            return (
+                                <div key={item.name} className="relative group">
+                                    <Link
+                                        href={item.href}
+                                        title={isCollapsed ? item.name : undefined}
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
+                                            isActive
+                                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
+                                                : "text-slate-500 hover:bg-rose-500/5 hover:text-rose-300",
+                                            isCollapsed && "justify-center px-2"
+                                        )}
+                                    >
+                                        <item.icon className={cn(
+                                            "h-5 w-5 flex-shrink-0 transition-all duration-300",
+                                            isActive ? "text-rose-400" : "text-slate-600 group-hover:text-rose-400"
+                                        )} />
+                                        {!isCollapsed && (
+                                            <span className="font-bold tracking-wide">{item.name}</span>
+                                        )}
+                                    </Link>
+                                    <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-rose-500/0 to-transparent group-hover:via-rose-500/30 transition-all duration-500" />
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </nav>
+
 
             {/* Footer Section (Plan & Logout) */}
             <div className="mt-auto pt-6 space-y-4">

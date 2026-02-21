@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { geminiModel } from "@/lib/gemini";
+import { getDynamicModel } from "@/lib/gemini";
 import { getCachedData, setCachedData } from "@/lib/cache";
 
 export async function getAutomationSequences() {
@@ -31,7 +31,8 @@ export async function getAutomationSequences() {
         ]
         Do not include markdown codeblocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -70,7 +71,8 @@ export async function getSequenceFlow(sequenceId: string) {
         ]
         Do not include markdown codeblocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -106,7 +108,8 @@ export async function getRetargetingInsights() {
         ]
         Do not include markdown codeblocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -131,7 +134,8 @@ export async function optimizeSequenceOrder(sequenceId: string) {
         }
         Do not include markdown codeblocks.`;
 
-        const result = await geminiModel.generateContent(systemInstruction);
+        const model = await getDynamicModel();
+        const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 

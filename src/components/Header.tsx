@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, Mail, Sparkles, ChevronDown, LogOut, Settings, CreditCard, Plus, Menu, Zap, TrendingUp } from "lucide-react"
+import { Bell, Search, Mail, Sparkles, ChevronDown, LogOut, Settings, CreditCard, Plus, Menu, Zap, TrendingUp, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
@@ -228,6 +228,16 @@ export function Header() {
                                             <Settings className="h-4 w-4" />
                                             Account Settings
                                         </Link>
+                                        {session?.user?.global_role === "super_admin" && (
+                                            <Link
+                                                href="/admin"
+                                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 transition-all hover:bg-rose-500/20"
+                                                onClick={() => setIsProfileOpen(false)}
+                                            >
+                                                <Shield className="h-4 w-4" />
+                                                Admin Dashboard
+                                            </Link>
+                                        )}
                                         <Link
                                             href="/settings"
                                             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
