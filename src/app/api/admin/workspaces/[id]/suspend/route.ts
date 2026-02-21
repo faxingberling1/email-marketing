@@ -5,7 +5,6 @@ import { withAdminGuard } from "@/lib/admin-guard"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { createAuditLog } from "@/lib/audit"
 import { prisma } from "@/lib/db"
-import { WorkspaceHealthStatus } from "@prisma/client"
 
 export const POST = withAdminGuard(async (
     req: NextRequest,
@@ -14,13 +13,17 @@ export const POST = withAdminGuard(async (
     const rl = checkRateLimit(adminUser.id)
     if (!rl.ok) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
 
-    const id = req.nextUrl.pathname.split("/")[5]
-    const workspace = await prisma.workspace.findUnique({ where: { id } })
+    const id = req.nextUrl.pathname.split("/")[4]
+    const workspace = await (prisma as any).workspace.findUnique({ where: { id } })
     if (!workspace) return NextResponse.json({ error: "Workspace not found" }, { status: 404 })
 
-    const updated = await prisma.workspace.update({
+    const updated = await (prisma as any).workspace.update({
         where: { id },
-        data: { health_status: WorkspaceHealthStatus.suspended },
+        data: {
+            subscription_status: "suspended",
+            health_status: "CRITICAL"
+        } as any,
+        select: { id: true, name: true, subscription_status: true, health_status: true } as any
     })
 
     await createAuditLog({
@@ -28,7 +31,10 @@ export const POST = withAdminGuard(async (
         action_type: "WORKSPACE_SUSPENDED",
         target_type: "workspace",
         target_id: id,
-        metadata: { previousHealth: workspace.health_status, workspaceName: workspace.name },
+        metadata: {
+            previousHealth: (workspace as any).health_status,
+            workspaceName: (workspace as any).name
+        },
     })
 
     return NextResponse.json({ workspace: updated })

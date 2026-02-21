@@ -21,7 +21,10 @@ export async function getDashboardStats() {
             recentCampaigns,
             recentActivity
         ] = await Promise.all([
-            prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, workspace: true, email: true }
+            }),
             prisma.contact.count({ where: { userId } }),
             prisma.email.count({ where: { campaign: { userId } } }),
             prisma.email.count({ where: { campaign: { userId }, opened: true } }),
@@ -47,22 +50,31 @@ export async function getDashboardStats() {
             })
         ]);
 
+        const ws = user?.workspace as any;
         const openRate = totalEmails > 0 ? (openedEmails / totalEmails) * 100 : 0;
         const clickRate = totalEmails > 0 ? (clickedEmails / totalEmails) * 100 : 0;
 
-        const trendData = Array.from({ length: 30 }).map((_, i) => ({
-            date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-            openRate: Math.floor(Math.random() * 20) + 30,
-            clickRate: Math.floor(Math.random() * 10) + 5,
-            isForecast: i > 23 // Last 7 days are "forecast"
-        }));
+        // Generate trend data (last 14 days + 3 days forecast)
+        const trendData = Array.from({ length: 17 }).map((_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (14 - i));
+            const isForecast = i > 14;
+            const baseOpenRate = 35 + Math.random() * 10;
+            const baseClickRate = 8 + Math.random() * 5;
 
-        // Fetch AI Predictive Analytics dynamically based on user stats
+            return {
+                date: date.toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                openRate: isForecast ? baseOpenRate + (Math.random() * 5) : baseOpenRate,
+                clickRate: isForecast ? baseClickRate + (Math.random() * 3) : baseClickRate,
+                isForecast
+            };
+        });
+
         const aiAnalyticsContext = `
-        Total Contacts: ${totalContacts}
-        Total Emails Sent: ${totalEmails}
-        Average Open Rate: ${openRate.toFixed(1)}%
-        Average Click Rate: ${clickRate.toFixed(1)}%
+            Total Contacts: ${totalContacts}
+            Total Emails Sent: ${totalEmails}
+            Average Open Rate: ${openRate.toFixed(1)}%
+            Average Click Rate: ${clickRate.toFixed(1)}%
         `;
 
         const peakEngagement = await getPeakEngagement(aiAnalyticsContext, userId);
@@ -87,7 +99,12 @@ export async function getDashboardStats() {
                     icon: 'Send',
                     sparkline: [20, 30, 25, 40, 35, 50, 45],
                     aiSuggestion: "Volume optimal. Delivery rates stable.",
-                    status: 'success'
+                    status: 'success',
+                    progressBar: ws ? {
+                        current: ws.total_emails_sent,
+                        total: ws.email_limit_remaining + ws.total_emails_sent,
+                        label: 'Monthly Limit'
+                    } : undefined
                 },
                 {
                     name: 'Avg. Open Rate',
@@ -106,6 +123,20 @@ export async function getDashboardStats() {
                     sparkline: [12, 14, 13, 15, 14, 16, 17],
                     aiSuggestion: "Click momentum detected. Add CTA variants.",
                     status: 'success'
+                },
+                {
+                    name: 'AI Credits Remaining',
+                    value: ws?.ai_credits_remaining?.toLocaleString() || '0',
+                    change: 'Real-time',
+                    icon: 'Zap',
+                    sparkline: [100, 95, 90, 85, 80, 75, 70],
+                    aiSuggestion: "Usage high → Autopilot mode engaged.",
+                    status: (ws?.ai_credits_remaining || 0) < 50 ? 'warning' : 'success',
+                    progressBar: ws ? {
+                        current: ws.total_ai_used,
+                        total: ws.ai_credits_remaining + ws.total_ai_used,
+                        label: 'Credits Used'
+                    } : undefined
                 },
             ],
             recentCampaigns: recentCampaigns.map((c: any) => {

@@ -20,6 +20,9 @@ export type AuditActionType =
     | "SYSTEM_SETTING_UPDATED"
     | "MAINTENANCE_MODE_TOGGLED"
     | "SECURITY_POLICY_CHANGED"
+    | "BILLING_CHECKOUT_STARTED"
+    | "BILLING_PORTAL_STARTED"
+    | "BILLING_ADDON_PURCHASED"
 
 interface AuditOptions {
     actorId: string

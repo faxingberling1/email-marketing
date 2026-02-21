@@ -15,6 +15,11 @@ interface MetricCardProps {
     aiSuggestion: string
     status: 'success' | 'warning' | 'danger'
     index: number
+    progressBar?: {
+        current: number
+        total: number
+        label: string
+    }
 }
 
 export function MetricCard({
@@ -25,10 +30,12 @@ export function MetricCard({
     sparkline,
     aiSuggestion,
     status,
-    index
+    index,
+    progressBar
 }: MetricCardProps) {
     const [isHovered, setIsHovered] = useState(false)
     const isPositive = !change.startsWith('-')
+    const progressPerc = progressBar ? Math.min(100, (progressBar.current / progressBar.total) * 100) : 0
 
     // Simple Sparkline Path Generator
     const getPath = (data: number[]) => {
@@ -74,41 +81,64 @@ export function MetricCard({
             </div>
 
             <div className="flex items-end justify-between relative z-10">
-                <div>
+                <div className="flex-1">
                     <h3 className="text-3xl font-black text-white tracking-tight">
                         {value}
                     </h3>
-                    <div className="mt-2 flex items-center gap-1.5">
-                        <span className={cn(
-                            "flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                            isPositive ? "text-emerald-400 bg-emerald-400/10" : "text-rose-400 bg-rose-400/10"
-                        )}>
-                            {isPositive ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
-                            {change}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-medium">vs last month</span>
-                    </div>
+
+                    {progressBar ? (
+                        <div className="mt-4 space-y-1.5 pr-8">
+                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
+                                <span>{progressBar.label}</span>
+                                <span>{Math.round(progressPerc)}%</span>
+                            </div>
+                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progressPerc}%` }}
+                                    transition={{ duration: 1.5, ease: "circOut" }}
+                                    className={cn(
+                                        "h-full rounded-full",
+                                        progressPerc > 90 ? "bg-rose-500" : progressPerc > 70 ? "bg-amber-500" : "bg-indigo-500"
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-2 flex items-center gap-1.5">
+                            <span className={cn(
+                                "flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter",
+                                isPositive ? "text-emerald-400 bg-emerald-400/10" : "text-rose-400 bg-rose-400/10"
+                            )}>
+                                {isPositive ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
+                                {change}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium">vs last month</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Mini Sparkline */}
-                <div className="w-20 h-8 overflow-visible opacity-40 group-hover:opacity-100 transition-opacity duration-500">
-                    <svg viewBox="0 0 100 30" className="w-full h-full overflow-visible">
-                        <motion.path
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 1, ease: "easeOut" }}
-                            d={getPath(sparkline)}
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className={cn(
-                                status === 'success' ? "text-emerald-400" : status === 'warning' ? "text-amber-400" : "text-rose-400"
-                            )}
-                        />
-                    </svg>
-                </div>
+                {!progressBar && (
+                    <div className="w-20 h-8 overflow-visible opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+                        <svg viewBox="0 0 100 30" className="w-full h-full overflow-visible">
+                            <motion.path
+                                initial={{ pathLength: 0 }}
+                                animate={{ pathLength: 1 }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                d={getPath(sparkline)}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className={cn(
+                                    status === 'success' ? "text-emerald-400" : status === 'warning' ? "text-amber-400" : "text-rose-400"
+                                )}
+                            />
+                        </svg>
+                    </div>
+                )}
             </div>
 
             {/* AI Suggestion Area */}

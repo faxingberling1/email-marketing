@@ -10,7 +10,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
     const rl = checkRateLimit(adminUser.id)
     if (!rl.ok) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
 
-    const id = req.nextUrl.pathname.split("/")[5]
+    const id = req.nextUrl.pathname.split("/")[4]
     const body = await req.json()
     const credits = parseInt(body.credits)
     if (!credits || credits < 1 || credits > 1_000_000) {
@@ -22,7 +22,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
 
     const updated = await prisma.workspace.update({
         where: { id },
-        data: { ai_credits_remaining: { increment: credits } },
+        data: { ai_credits_remaining: { increment: credits } } as any,
     })
 
     await createAuditLog({
@@ -30,7 +30,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
         action_type: "WORKSPACE_CREDITS_ADDED",
         target_type: "workspace",
         target_id: id,
-        metadata: { creditsAdded: credits, newTotal: updated.ai_credits_remaining, workspaceName: workspace.name },
+        metadata: { creditsPurchased: credits, newTotal: (updated as any).ai_credits_remaining, workspaceName: workspace.name },
     })
 
     return NextResponse.json({ workspace: updated })

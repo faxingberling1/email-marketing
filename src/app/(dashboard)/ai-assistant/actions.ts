@@ -1,12 +1,31 @@
 "use server"
 
 import { getDynamicModel } from "@/lib/gemini";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
+import { checkAiLimit, consumeAiCredits } from "@/lib/services/usage-enforcement";
 
 // Mocking Intelligence Data Layer for AI Assistant
 // Ideally these would interface with LLM APIs
 
 export async function generateSubjectLines(prompt: string, segment: string) {
     try {
+        const session = await auth();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error("Unauthorized");
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { workspaceId: true }
+        });
+        if (!user?.workspaceId) throw new Error("No active workspace");
+
+        // Enforcement Check
+        const usage = await checkAiLimit(user.workspaceId, 1);
+        if (!usage.allowed) {
+            return { error: usage.reason, code: usage.code };
+        }
+
         const systemInstruction = `You are an expert marketing copywriter. 
         Generate 4 highly engaging email subject lines for the target audience: ${segment}.
         The subject lines should be based on this instruction: ${prompt}
@@ -24,9 +43,17 @@ export async function generateSubjectLines(prompt: string, segment: string) {
         const responseText = result.response.text();
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        return JSON.parse(cleanedJSON);
-    } catch (error) {
+        const subjects = JSON.parse(cleanedJSON);
+
+        // Consume Credits on success
+        await consumeAiCredits(user.workspaceId, 1);
+
+        return subjects;
+    } catch (error: any) {
         console.error("Gemini AI Subject Generation Error:", error);
+        if (error.message?.includes("Insufficient") || error.message?.includes("Limit")) {
+            return { error: error.message, code: "AI_LIMIT_REACHED" };
+        }
         return [
             { id: '1', text: `🚀 Level up your ${segment} outreach today!`, predictedOpenRate: '48.5%', confidence: 'High' }
         ];
@@ -35,6 +62,22 @@ export async function generateSubjectLines(prompt: string, segment: string) {
 
 export async function generateEmailCopy(data: { prompt: string, tone: string, language: string, segment: string }) {
     try {
+        const session = await auth();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error("Unauthorized");
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { workspaceId: true }
+        });
+        if (!user?.workspaceId) throw new Error("No active workspace");
+
+        // Enforcement Check (Email generation costs 2 credits)
+        const usage = await checkAiLimit(user.workspaceId, 2);
+        if (!usage.allowed) {
+            return { error: usage.reason, code: usage.code };
+        }
+
         const systemInstruction = `You are a world-class email marketing AI.
         Generate the body copy for an email campaign based on these parameters:
         Target Audience: ${data.segment}
@@ -48,19 +91,23 @@ export async function generateEmailCopy(data: { prompt: string, tone: string, la
         const result = await model.generateContent(systemInstruction);
         const responseText = result.response.text();
 
+        // Consume Credits
+        await consumeAiCredits(user.workspaceId, 2);
+
         return {
             id: Date.now().toString(),
             content: responseText.trim(),
             language: data.language,
             tone: data.tone
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Gemini AI Body Generation Error:", error);
         return {
             id: Date.now().toString(),
-            content: "Failed to generate copy. Please check API settings.",
+            content: error.message || "Failed to generate copy. Please check API settings.",
             language: data.language,
-            tone: data.tone
+            tone: data.tone,
+            error: true
         };
     }
 }

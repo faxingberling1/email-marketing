@@ -18,7 +18,8 @@ import {
     X,
     Shield,
     Building2,
-    Lock
+    Lock,
+    CreditCard
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -42,6 +43,7 @@ const navigation = [
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Templates", href: "/templates", icon: Library },
     { name: "Automation", href: "/automation", icon: Zap },
+    { name: "Billing", href: "/billing", icon: CreditCard },
     { name: "Settings", href: "/settings", icon: Settings },
     { name: "Help / Docs", href: "/help", icon: HelpCircle },
 ]
@@ -61,11 +63,11 @@ export function Sidebar() {
     const { data: session } = useSession()
 
     const planMapping: Record<string, { name: string, color: string, limit: string, progress: string }> = {
-        starter: { name: "Starter Plan", color: "from-emerald-500 to-teal-500", limit: "10k", progress: "45%" },
-        growth: { name: "Growth Plan", color: "from-indigo-500 to-sky-500", limit: "50k", progress: "30%" },
-        pro: { name: "Pro Plan", color: "from-purple-500 to-indigo-500", limit: "200k", progress: "25%" },
-        enterprise: { name: "Enterprise Plan", color: "from-red-500 to-orange-500", limit: "Unlimited", progress: "10%" },
-        free: { name: "Free Plan", color: "from-slate-500 to-slate-400", limit: "1k", progress: "25%" }
+        starter: { name: "Starter Plan", color: "from-emerald-500 to-teal-500", limit: "10k", progress: "15%" },
+        growth: { name: "Growth Plan", color: "from-indigo-500 to-sky-500", limit: "50k", progress: "8%" },
+        pro: { name: "Pro Plan", color: "from-purple-500 to-indigo-500", limit: "200k", progress: "5%" },
+        enterprise: { name: "Enterprise Plan", color: "from-red-500 to-orange-500", limit: "Unlimited", progress: "2%" },
+        free: { name: "Free Plan", color: "from-slate-500 to-slate-400", limit: "1k", progress: "45%" }
     }
 
     const currentPlan = session?.user?.subscriptionPlan?.toLowerCase() || "free"

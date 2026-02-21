@@ -9,7 +9,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
     const rl = checkRateLimit(adminUser.id)
     if (!rl.ok) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
 
-    const id = req.nextUrl.pathname.split("/")[5]
+    const id = req.nextUrl.pathname.split("/")[4]
     const workspace = await prisma.workspace.findUnique({ where: { id } })
     if (!workspace) return NextResponse.json({ error: "Workspace not found" }, { status: 404 })
 
@@ -18,7 +18,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
         data: {
             ai_credits_remaining: 100,
             email_limit_remaining: 500,
-        },
+        } as any
     })
 
     await createAuditLog({

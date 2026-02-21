@@ -9,7 +9,7 @@ export const POST = withAdminGuard(async (req: NextRequest, adminUser) => {
     const rl = checkRateLimit(adminUser.id)
     if (!rl.ok) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
 
-    const id = req.nextUrl.pathname.split("/")[5]
+    const id = req.nextUrl.pathname.split("/")[4]
 
     const target = await (prisma as any).user.findUnique({ where: { id } })
     if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 })

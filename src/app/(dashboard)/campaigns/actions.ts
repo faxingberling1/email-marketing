@@ -2,6 +2,8 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { checkEmailLimit, consumeEmailCredits } from "@/lib/services/usage-enforcement";
+import { getTierLimits } from "@/lib/tiers";
 
 // Real DB Action
 export async function createCampaign(data: {
@@ -17,19 +19,22 @@ export async function createCampaign(data: {
         const userId = session?.user?.id;
         if (!userId) return { success: false, error: "Unauthorized" };
 
-        // 1. Resolve Tier & Limits
-        const userRows = await prisma.$queryRaw<any[]>`
-            SELECT w.id as "workspaceId", w.subscription_plan, w.email_limit_remaining
-            FROM "User" u
-            JOIN "Workspace" w ON u."workspaceId" = w.id
-            WHERE u.id = ${userId}
-            LIMIT 1
-        `
-        const ws = userRows[0]
-        if (!ws) return { success: false, error: "No active workspace" };
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { workspaceId: true }
+        });
+        if (!user?.workspaceId) return { success: false, error: "No active workspace" };
 
-        const { getTierLimits } = await import('@/lib/tiers');
-        const limits = getTierLimits(ws.subscription_plan);
+        const workspaceId = user.workspaceId;
+
+        // 1. Resolve Tier & Limits
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: workspaceId },
+            select: { subscription_plan: true } as any
+        }) as any;
+
+        if (!workspace) return { success: false, error: "No active workspace" };
+        const limits = getTierLimits(workspace.subscription_plan);
 
         // 2. Check Workflow/Campaign Limit
         const campaignCount = await prisma.campaign.count({
@@ -39,17 +44,18 @@ export async function createCampaign(data: {
         if (campaignCount >= limits.automation_workflows) {
             return {
                 success: false,
-                error: `Workflow Limit Reached. Your ${ws.subscription_plan} plan allows up to ${limits.automation_workflows} active workflow(s).`,
+                error: `Workflow Limit Reached. Your ${workspace.subscription_plan} plan allows up to ${limits.automation_workflows} active workflow(s).`,
                 code: "LIMIT_REACHED"
             };
         }
 
         // 3. Check Email Volume Limit
-        if (ws.email_limit_remaining < data.segmentCount) {
+        const usage = await checkEmailLimit(workspaceId, data.segmentCount);
+        if (!usage.allowed) {
             return {
                 success: false,
-                error: `Email Volume Limit Exceeded. Your plan has ${ws.email_limit_remaining.toLocaleString()} emails remaining, but this segment contains ${data.segmentCount.toLocaleString()} targets.`,
-                code: "LIMIT_REACHED"
+                error: usage.reason,
+                code: usage.code
             };
         }
 
@@ -64,12 +70,7 @@ export async function createCampaign(data: {
                 }
             });
 
-            await tx.$executeRaw`
-                UPDATE "Workspace"
-                SET email_limit_remaining = GREATEST(0, email_limit_remaining - ${data.segmentCount}),
-                    total_emails_sent = total_emails_sent + ${data.segmentCount}
-                WHERE id = ${ws.workspaceId}
-            `;
+            await consumeEmailCredits(workspaceId, data.segmentCount);
 
             return newCampaign;
         });

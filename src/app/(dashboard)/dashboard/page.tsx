@@ -45,7 +45,8 @@ export default function DashboardPage() {
                     if (s.name === 'Total Contacts') return { ...s, icon: Users }
                     if (s.name === 'Emails Sent') return { ...s, icon: Send }
                     if (s.name === 'Avg. Open Rate') return { ...s, icon: TrendingUp }
-                    return { ...s, icon: MousePointer2 }
+                    if (s.name === 'Click Rate') return { ...s, icon: MousePointer2 }
+                    return { ...s, icon: Zap }
                 })
                 setData({ ...result, metrics: metricsWithIcons })
             }

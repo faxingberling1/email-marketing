@@ -13,7 +13,7 @@ export const PATCH = withAdminGuard(async (req: NextRequest, adminUser) => {
     const rl = checkRateLimit(adminUser.id)
     if (!rl.ok) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
 
-    const id = req.nextUrl.pathname.split("/")[5]
+    const id = req.nextUrl.pathname.split("/")[4]
     const body = await req.json()
     const { plan, status } = body
 
