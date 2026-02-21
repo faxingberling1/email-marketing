@@ -103,8 +103,8 @@ export function ContactTable({ contacts = [], onDelete, onMail }: ContactTablePr
                         <Users className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">Tactical Intelligence Hub</h2>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{filteredAndSortedContacts.length} Active Entities</p>
+                        <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">Contacts</h2>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{filteredAndSortedContacts.length} Active Contacts</p>
                     </div>
                 </div>
 
@@ -113,7 +113,7 @@ export function ContactTable({ contacts = [], onDelete, onMail }: ContactTablePr
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
                         <input
                             type="text"
-                            placeholder="SEARCH ENTITIES..."
+                            placeholder="Search contacts..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="bg-slate-900/50 border border-white/5 rounded-xl px-9 py-2 text-[10px] font-bold text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all w-full md:w-64 tracking-widest"
@@ -137,16 +137,16 @@ export function ContactTable({ contacts = [], onDelete, onMail }: ContactTablePr
                         <tr className="border-b border-white/5 bg-white/[0.01]">
                             <th onClick={() => handleSort('name')} className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
                                 <div className="flex items-center gap-2">
-                                    Entity Name <ArrowUpDown className="h-3 w-3" />
+                                    Name <ArrowUpDown className="h-3 w-3" />
                                 </div>
                             </th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Segment Cluster</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Segment</th>
                             <th onClick={() => handleSort('score')} className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
                                 <div className="flex items-center gap-2">
                                     Engagement <ArrowUpDown className="h-3 w-3" />
                                 </div>
                             </th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Entity Status</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
                             <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
                         </tr>
                     </thead>
@@ -263,11 +263,11 @@ export function ContactTable({ contacts = [], onDelete, onMail }: ContactTablePr
             {/* Table Footer */}
             <div className="p-4 border-t border-white/5 bg-white/[0.01] flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                 <div className="flex items-center gap-4">
-                    <span>Showing {filteredAndSortedContacts.length} Entities</span>
+                    <span>Showing {filteredAndSortedContacts.length} Contacts</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-emerald-400/60 font-mono">Real-time Stream Active</span>
+                    <span className="text-emerald-400/60 font-mono">Live Data</span>
                 </div>
             </div>
         </div>

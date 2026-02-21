@@ -65,7 +65,7 @@ export default function ContactsPage() {
                 >
                     <Zap className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Synchronizing Relationship Intelligence...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading contacts...</p>
             </div>
         )
     }
@@ -83,8 +83,8 @@ export default function ContactsPage() {
                         <Users className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Entity Database Hub</p>
-                        <h1 className="text-xl font-black text-white tracking-tight">RELATIONSHIP TACTICS</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Contacts</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Manage Contacts</h1>
                     </div>
                 </div>
 
@@ -121,22 +121,22 @@ export default function ContactsPage() {
                     <div className="space-y-6 relative z-10">
                         <div className="flex items-center gap-2">
                             <Radar className="h-4 w-4 text-indigo-400" />
-                            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Relationship Radar</h3>
+                            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Contact Insights</h3>
                         </div>
 
                         <div className="space-y-4">
                             <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Avg. Conversion Likelihood</span>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Avg. Conversion Rate</span>
                                 <span className="text-xl font-black text-emerald-400 tracking-tighter">{data?.predictions?.avgLikelihoodToConvert}</span>
                             </div>
                             <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Predicted Churn Orbit</span>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Predicted Churn Rate</span>
                                 <span className="text-xl font-black text-rose-400 tracking-tighter">{data?.predictions?.predictedChurnRate}</span>
                             </div>
                             <div className="flex items-center justify-between p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
                                 <div className="flex items-center gap-2">
                                     <AlertCircle className="h-3.5 w-3.5 text-indigo-400" />
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">At-Risk Entities</span>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">At-Risk Contacts</span>
                                 </div>
                                 <span className="text-xl font-black text-white tracking-tighter">{data?.predictions?.atRiskCount}</span>
                             </div>
@@ -144,7 +144,7 @@ export default function ContactsPage() {
                     </div>
 
                     <button className="mt-8 w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl text-[8px] font-black text-white uppercase tracking-[0.3em] transition-all relative z-10 border border-white/5">
-                        Launch Retention Sequence
+                        Launch Retention Campaign
                     </button>
                 </div>
             </div>
@@ -162,6 +162,7 @@ export default function ContactsPage() {
             <ImportContactsModal
                 isOpen={isImportOpen}
                 onClose={() => setIsImportOpen(false)}
+                onSuccess={loadData}
             />
             <AddContactModal
                 isOpen={isAddOpen}

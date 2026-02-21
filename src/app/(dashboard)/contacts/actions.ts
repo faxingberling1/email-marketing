@@ -76,9 +76,9 @@ export async function getContactsData(searchTerm: string = "") {
             // Prioritize raw DB values, fallback to AI or defaults
             businessName: c.businessName || prediction?.businessName || null,
             phone: c.phone || prediction?.phone || null,
-            segment: prediction?.segment || 'Strategic Target',
+            segment: prediction?.segment || 'General',
             score: prediction?.score || 50,
-            activity: prediction?.activity || 'Signal Pending',
+            activity: prediction?.activity || 'No Activity',
             status: prediction?.status || 'Stable'
         };
     });
@@ -281,7 +281,7 @@ async function analyzeContactsEngagement(contextString: string, userId: string, 
         console.error("Gemini AI Segmentation Error:", error);
         return {
             contacts: [],
-            clusters: [{ id: 'fallback', name: 'Strategic Segment', count: 0, growth: '0%', color: 'indigo' }],
+            clusters: [{ id: 'fallback', name: 'General', count: 0, growth: '0%', color: 'indigo' }],
             predictions: {
                 avgLikelihoodToConvert: '42%',
                 predictedChurnRate: '12%',

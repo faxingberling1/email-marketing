@@ -65,7 +65,7 @@ export default function DashboardPage() {
                 >
                     <Zap className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Synchronizing Intelligence...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading dashboard...</p>
             </div>
         )
     }
@@ -90,13 +90,13 @@ export default function DashboardPage() {
                         <Activity className="h-4 w-4" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">AI Engine Status</p>
-                        <p className="text-sm font-bold text-white tracking-wide">Primed for Optimization</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">AI Status</p>
+                        <p className="text-sm font-bold text-white tracking-wide">Ready</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5">
                     <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                    <span className="text-[10px] font-mono text-slate-400">Signal: <span className="text-white">Optimal</span></span>
+                    <span className="text-[10px] font-mono text-slate-400">Status: <span className="text-white">Good</span></span>
                 </div>
             </motion.div>
 
@@ -134,25 +134,6 @@ export default function DashboardPage() {
                 <CampaignTable campaigns={data?.recentCampaigns || []} />
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                {/* Automation & Sequence Hub */}
-                <div className="space-y-6">
-                    <div className="flex items-center gap-2 px-2">
-                        <BrainCircuit className="h-5 w-5 text-indigo-400" />
-                        <h2 className="text-lg font-black text-white tracking-[0.2em] uppercase">Automation Command</h2>
-                    </div>
-                    <SequenceFlow steps={data?.sequences?.[0]?.steps || []} />
-                </div>
-
-                {/* Template Intelligence Hub */}
-                <div className="space-y-6">
-                    <div className="flex items-center gap-2 px-2">
-                        <Layout className="h-5 w-5 text-purple-400" />
-                        <h2 className="text-lg font-black text-white tracking-[0.2em] uppercase">Creative Intelligence</h2>
-                    </div>
-                    <TemplateLibrary templates={data?.templates || []} />
-                </div>
-            </div>
         </div>
     )
 }

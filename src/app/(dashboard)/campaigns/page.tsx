@@ -42,7 +42,7 @@ export default function CampaignsPage() {
                 >
                     <Zap className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Synchronizing Campaign Intelligence...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading campaigns...</p>
             </div>
         )
     }
@@ -60,8 +60,8 @@ export default function CampaignsPage() {
                         <Activity className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Fleet Status Hub</p>
-                        <h1 className="text-xl font-black text-white tracking-tight">CAMPAIGN OPERATIONS</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Campaigns</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Manage Campaigns</h1>
                     </div>
                 </div>
 
@@ -70,7 +70,7 @@ export default function CampaignsPage() {
                     className="flex items-center gap-3 bg-indigo-500 hover:bg-indigo-400 px-6 py-3 rounded-2xl text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all group"
                 >
                     <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-                    Initialize Campaign
+                    New Campaign
                 </button>
             </motion.div>
 
@@ -81,10 +81,10 @@ export default function CampaignsPage() {
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400">
                             <Rocket className="h-5 w-5" />
                         </div>
-                        <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">+12% VELOCITY</span>
+                        <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">+12% Growth</span>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Dispatched</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Sent</p>
                         <h3 className="text-2xl font-black text-white tracking-tighter">142,840</h3>
                     </div>
                 </div>
@@ -97,7 +97,7 @@ export default function CampaignsPage() {
                         <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">PEAK PERFORMANCE</span>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg. Target Acquisition</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg. Open Rate</p>
                         <h3 className="text-2xl font-black text-white tracking-tighter">32.4%</h3>
                     </div>
                 </div>
@@ -113,7 +113,7 @@ export default function CampaignsPage() {
                         <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI ACTIVE</span>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Predicted Uplift</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">AI Predicted Boost</p>
                         <h3 className="text-2xl font-black text-white tracking-tighter">+18.5%</h3>
                     </div>
                 </div>

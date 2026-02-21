@@ -50,7 +50,7 @@ export default function AIAssistantPage() {
                 >
                     <BrainCircuit className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Initializing Neural Interface...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading AI tools...</p>
             </div>
         )
     }
@@ -73,7 +73,7 @@ export default function AIAssistantPage() {
                         />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400/60 mb-1">Central Intelligence Hub</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400/60 mb-1">AI Assistant</p>
                         <h1 className="text-3xl font-black text-white tracking-tight leading-none uppercase">AI Assistant Console</h1>
                     </div>
                 </div>
@@ -145,15 +145,15 @@ export default function AIAssistantPage() {
                                     <Library className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">Tactical Template Library</h2>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pre-Built Intelligence Patterns</p>
+                                    <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">Template Library</h2>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Prebuilt templates</p>
                                 </div>
                             </div>
                             <div className="relative group w-72">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 transition-colors group-focus-within:text-indigo-400" />
                                 <input
                                     type="text"
-                                    placeholder="SEARCH PATTERNS..."
+                                    placeholder="Search templates..."
                                     className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-10 py-2.5 text-[10px] font-bold text-white uppercase tracking-widest focus:outline-none focus:border-indigo-500/30"
                                 />
                             </div>

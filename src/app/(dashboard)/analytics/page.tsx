@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
                 >
                     <BarChart3 className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Syncing Strategic Telemetry...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading analytics...</p>
             </div>
         )
     }
@@ -65,8 +65,8 @@ export default function AnalyticsPage() {
                         <ActivitySquare className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Orbital Data Hub</p>
-                        <h1 className="text-xl font-black text-white tracking-tight">STRATEGIC SURVEILLANCE</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Analytics</p>
+                        <h1 className="text-xl font-black text-white tracking-tight">Performance Overview</h1>
                     </div>
                 </div>
 
@@ -106,16 +106,16 @@ export default function AnalyticsPage() {
                     <div className="space-y-6 relative z-10">
                         <div className="flex items-center gap-2">
                             <Radar className="h-4 w-4 text-indigo-400" />
-                            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Scale Projection Orbit</h3>
+                            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Growth Forecast</h3>
                         </div>
 
                         <div className="space-y-8 py-4">
                             <div>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subscriber Forecast</p>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expected Subscribers</p>
                                 <h4 className="text-3xl font-black text-white tracking-tighter">{data?.growthOrb?.predictedSubscribers}</h4>
                                 <div className="mt-2 flex items-center gap-1.5 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
                                     <TrendingUp className="h-3 w-3" />
-                                    Optimized Velocity
+                                    Growing
                                 </div>
                             </div>
 
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
                                 <div className="flex items-center justify-between p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
                                     <div className="flex items-center gap-2">
                                         <BrainCircuit className="h-4 w-4 text-indigo-400" />
-                                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Confidence Orbit</span>
+                                        <span className="text-[9px] font-black text-white uppercase tracking-widest">AI Confidence</span>
                                     </div>
                                     <span className="text-lg font-black text-white tracking-tighter">{data?.growthOrb?.conversionConfidence}</span>
                                 </div>
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
 
                     <div className="mt-8 pt-6 border-t border-white/5 relative z-10">
                         <button className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 py-4 rounded-2xl text-[8px] font-black text-white uppercase tracking-[0.3em] transition-all border border-white/5">
-                            Synchronize Forecast <ArrowUpRight className="h-3.5 w-3.5" />
+                            Refresh Forecast <ArrowUpRight className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 </div>
@@ -158,14 +158,14 @@ export default function AnalyticsPage() {
             <div className="flex items-center justify-center gap-10 pt-8 opacity-20 group">
                 <div className="flex items-center gap-3">
                     <Globe className="h-5 w-5 text-slate-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Global Node: AMS-4</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Connected</span>
                 </div>
                 <div className="h-1 w-20 bg-slate-800 rounded-full overflow-hidden">
                     <motion.div animate={{ x: [-80, 80] }} transition={{ repeat: Infinity, duration: 3, ease: 'linear' }} className="h-full w-10 bg-indigo-500/40" />
                 </div>
                 <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-slate-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Telemetry Sync: T-0.4s</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Last updated: 0.4s ago</span>
                 </div>
             </div>
         </div>

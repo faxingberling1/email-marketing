@@ -48,16 +48,16 @@ export default function SettingsPage() {
                 >
                     <Settings2 className="h-8 w-8 text-indigo-500" />
                 </motion.div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Synchronizing Core Modules...</p>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Loading settings...</p>
             </div>
         )
     }
 
     const tabs = [
-        { id: 'profile', label: 'Identity', icon: User },
-        { id: 'subscription', label: 'Orbital Sync', icon: CreditCard },
-        { id: 'integrations', label: 'Nodes', icon: Link },
-        { id: 'ai', label: 'Neural', icon: BrainCircuit },
+        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'subscription', label: 'Plan', icon: CreditCard },
+        { id: 'integrations', label: 'Integrations', icon: Link },
+        { id: 'ai', label: 'AI Preferences', icon: BrainCircuit },
         { id: 'domains', label: 'Domains', icon: Globe },
     ]
 
@@ -74,8 +74,8 @@ export default function SettingsPage() {
                         <Settings2 className="h-8 w-8" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Mission Configuration Hub</p>
-                        <h1 className="text-2xl font-black text-white tracking-tight uppercase">SYSTEM CONTROL</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Settings</p>
+                        <h1 className="text-2xl font-black text-white tracking-tight uppercase">Manage Settings</h1>
                     </div>
                 </div>
 
@@ -133,11 +133,11 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between w-full opacity-30">
                     <div className="flex items-center gap-3">
                         <Shield className="h-4 w-4 text-slate-500" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Core Integrity: 100%</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">System Health: 100%</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <Activity className="h-4 w-4 text-slate-500" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Node Sync: Nominal</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">All Systems OK</span>
                     </div>
                 </div>
 
@@ -150,7 +150,7 @@ export default function SettingsPage() {
                     />
                 </div>
 
-                <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.5em] opacity-40">Continuous Neural Loop Active</p>
+                <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.5em] opacity-40">Running normally</p>
             </div>
         </div>
     )

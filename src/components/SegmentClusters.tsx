@@ -47,7 +47,7 @@ export function SegmentClusters({ clusters = [] }: SegmentClustersProps) {
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <BrainCircuit className="h-4 w-4 text-indigo-400" />
-                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Behavioral AI Clustering</h3>
+                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">AI Contact Groups</h3>
                 </div>
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Updated 5m ago</span>
             </div>
@@ -112,7 +112,7 @@ export function SegmentClusters({ clusters = [] }: SegmentClustersProps) {
                             <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
                                 <div className="flex items-center gap-1.5">
                                     <ShieldCheck className="h-3 w-3 text-slate-500" />
-                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Health: Optimal</span>
+                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Status: Good</span>
                                 </div>
                                 <motion.div
                                     className="h-1 w-8 rounded-full bg-white/10 overflow-hidden"

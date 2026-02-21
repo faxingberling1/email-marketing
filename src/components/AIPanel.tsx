@@ -69,24 +69,24 @@ export function AIPanel({
                         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400">
                             <BrainCircuit className="h-5 w-5" />
                         </div>
-                        <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">AI Intelligence Hub</h2>
+                        <h2 className="text-sm font-black text-white tracking-[0.2em] uppercase">AI Suggestions</h2>
                     </div>
                 </div>
 
                 <div className="space-y-8 flex-1 relative z-10">
                     {/* Growth Forecast */}
                     <div className="relative group/forecast overflow-hidden p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-indigo-500/20 transition-all">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Growth Forecast</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Predicted Growth</p>
                         <div className="flex items-baseline gap-2">
                             <span className="text-3xl font-black text-indigo-400">{growthForecast}</span>
-                            <span className="text-[10px] font-bold text-slate-500">Predicted MoM Uplift</span>
+                            <span className="text-[10px] font-bold text-slate-500">Month-over-month</span>
                         </div>
                         <TrendingUp className="absolute -right-2 -bottom-2 h-16 w-16 text-indigo-500/10 -rotate-12 group-hover/forecast:scale-110 group-hover/forecast:rotate-0 transition-transform duration-500" />
                     </div>
 
                     {/* Activity Horizon (Pulsing Signal) */}
                     <div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Activity Horizon</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Recent Activity</p>
                         <div className="flex items-center gap-4 bg-slate-950/50 rounded-2xl px-5 py-4 border border-white/5 shadow-inner">
                             <div className="relative flex h-3 w-3">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -109,7 +109,7 @@ export function AIPanel({
                     {/* Recommendations */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Recommendations</p>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Suggestions</p>
                             <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
                                 {recommendations.length} ACTIVE
                             </span>
@@ -160,13 +160,13 @@ export function AIPanel({
                                                 className="px-4 pb-4 border-t border-white/5 pt-4 bg-white/[0.02]"
                                             >
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Recommended Action</span>
+                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">What to do</span>
                                                     <button
                                                         onClick={() => handleCopy(rec.id, rec.copyText)}
                                                         className="flex items-center gap-1.5 text-[10px] font-black text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-2 py-1 rounded-lg"
                                                     >
                                                         {copiedId === rec.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                                                        {copiedId === rec.id ? "COPIED" : "COPY INTELLIGENCE"}
+                                                        {copiedId === rec.id ? "COPIED" : "COPY"}
                                                     </button>
                                                 </div>
                                                 <p className="mt-2 text-xs font-bold text-white italic bg-slate-900/50 p-3 rounded-xl border border-white/5">
@@ -194,7 +194,7 @@ export function AIPanel({
                     </button>
                     <div className="mt-4 flex items-center justify-center gap-2">
                         <Signal className="h-3 w-3 text-emerald-500 animate-pulse" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">End-to-End Encryption Active</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Your data is secure</span>
                     </div>
                 </div>
             </div>
