@@ -142,12 +142,17 @@ export function LandingFooter() {
                     <div className="md:col-span-2 space-y-8">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Infrastructure</h4>
                         <ul className="space-y-4">
-                            {["Features", "Intelligence", "Pricing", "Security"].map((link) => (
-                                <li key={link}>
-                                    <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
-                                        {link}
+                            {([
+                                { label: "Features", href: "/#features" },
+                                { label: "Intelligence", href: "/#intelligence" },
+                                { label: "Pricing", href: "/#pricing" },
+                                { label: "Security", href: "/security" },
+                            ] as const).map((link) => (
+                                <li key={link.label}>
+                                    <Link href={link.href} className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
+                                        {link.label}
                                         <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -156,12 +161,17 @@ export function LandingFooter() {
                     <div className="md:col-span-2 space-y-8">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Resources</h4>
                         <ul className="space-y-4">
-                            {["Case Studies", "Neural Blog", "Documentation", "Support"].map((link) => (
-                                <li key={link}>
-                                    <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
-                                        {link}
+                            {([
+                                { label: "Case Studies", href: "/case-studies" },
+                                { label: "Neural Blog", href: "/blog" },
+                                { label: "Documentation", href: "/docs" },
+                                { label: "Support", href: "/support" },
+                            ] as const).map((link) => (
+                                <li key={link.label}>
+                                    <Link href={link.href} className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
+                                        {link.label}
                                         <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -193,9 +203,9 @@ export function LandingFooter() {
                 {/* Bottom Bar */}
                 <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="flex flex-wrap items-center justify-center gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
-                        <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-                        <a href="#" className="hover:text-white transition-colors">Security Schema</a>
+                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                        <Link href="/security" className="hover:text-white transition-colors">Security Schema</Link>
                     </div>
 
                     <div className="flex flex-col md:items-end gap-2 text-center md:text-right">

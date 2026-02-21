@@ -18,12 +18,6 @@ export const authConfig = {
                 return true
             }
 
-            if (isLoggedIn) {
-                if (nextUrl.pathname === '/login' || nextUrl.pathname === '/signup') {
-                    return Response.redirect(new URL('/dashboard', nextUrl))
-                }
-            }
-
             return true
         },
     },
