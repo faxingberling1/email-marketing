@@ -20,6 +20,7 @@ const navItems = [
     {
         section: "MANAGEMENT", items: [
             { href: "/admin/workspaces", label: "Workspaces", icon: Building2 },
+            { href: "/admin/enterprise", label: "Enterprise Accounts", icon: Shield },
             { href: "/admin/users", label: "User Genome", icon: Users },
             { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
         ]

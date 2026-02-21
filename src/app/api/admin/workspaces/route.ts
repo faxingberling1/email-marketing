@@ -13,6 +13,7 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
     const limit = Math.min(100, parseInt(searchParams.get("limit") ?? "25"))
     const search = searchParams.get("search") ?? ""
     const health = searchParams.get("health") ?? ""
+    const plan = searchParams.get("plan") ?? ""
     const includeDeleted = searchParams.get("include_deleted") === "1"
     const offset = (page - 1) * limit
 
@@ -24,7 +25,7 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
         total_ai_used: number; total_emails_sent: number
         health_status: string; deleted_at: Date | null; createdAt: Date
         owner_id: string | null; owner_name: string | null; owner_email: string | null
-        member_count: bigint
+        member_count: bigint; contact_count: bigint
     }
 
     // Build raw SQL with optional filters
@@ -36,6 +37,9 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
         : Prisma.empty
     const healthFilter = health
         ? Prisma.sql`AND w.health_status = ${health}`
+        : Prisma.empty
+    const planFilter = plan
+        ? Prisma.sql`AND w.subscription_plan = ${plan}`
         : Prisma.empty
     const deletedFilter = includeDeleted
         ? Prisma.empty
@@ -51,13 +55,15 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
             w."ownerId" AS owner_id,
             u.name    AS owner_name,
             u.email   AS owner_email,
-            COUNT(wm.id) AS member_count
+            COUNT(DISTINCT wm.id) AS member_count,
+            (SELECT COUNT(*) FROM "Contact" c WHERE c."userId" = w."ownerId") AS contact_count
         FROM "Workspace" w
         LEFT JOIN "User" u ON u.id = w."ownerId"
         LEFT JOIN "WorkspaceMember" wm ON wm."workspaceId" = w.id
         WHERE 1=1
         ${searchFilter}
         ${healthFilter}
+        ${planFilter}
         ${deletedFilter}
         GROUP BY w.id, u.name, u.email
         ORDER BY w."createdAt" DESC
@@ -70,6 +76,7 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
         WHERE 1=1
         ${searchFilter}
         ${healthFilter}
+        ${planFilter}
         ${deletedFilter}
     `
 
@@ -90,7 +97,10 @@ export const GET = withAdminGuard(async (req: NextRequest, adminUser) => {
         owner: r.owner_id
             ? { id: r.owner_id, name: r.owner_name ?? undefined, email: r.owner_email ?? "" }
             : null,
-        _count: { members: Number(r.member_count) },
+        _count: {
+            members: Number(r.member_count),
+            contacts: Number(r.contact_count)
+        },
     }))
 
     return NextResponse.json({ workspaces, total, page, limit })

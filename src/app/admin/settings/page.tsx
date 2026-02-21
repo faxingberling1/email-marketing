@@ -192,10 +192,10 @@ export default function SystemSettingsPage() {
 function SettingSection({ title, icon: Icon, children, danger }: { title: string; icon: any; children: React.ReactNode; danger?: boolean }) {
     return (
         <div className={cn(
-            "bg-slate-900 border rounded-3xl overflow-hidden shadow-xl",
+            "bg-slate-900 border rounded-3xl shadow-xl",
             danger ? "border-rose-500/20" : "border-white/5"
         )}>
-            <div className="px-6 py-4 flex items-center gap-3 border-b border-white/5 bg-white/[0.01]">
+            <div className="px-6 py-4 flex items-center gap-3 border-b border-white/5 bg-white/[0.01] rounded-t-3xl">
                 <Icon className={cn("h-4.5 w-4.5", danger ? "text-rose-500" : "text-indigo-400")} />
                 <span className="text-xs font-black text-white uppercase tracking-widest">{title}</span>
             </div>

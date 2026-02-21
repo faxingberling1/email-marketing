@@ -12,13 +12,14 @@ import {
     BarChart3,
     ArrowRight,
     Loader2,
-    CheckCircle2,
     Eye,
     Type,
-    BrainCircuit
+    BrainCircuit,
+    AlertCircle,
+    CheckCircle2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { predictCampaignPerformance, generateCreative } from "../app/(dashboard)/dashboard/campaigns/actions"
+import { predictCampaignPerformance, generateCreative, createCampaign } from "../app/(dashboard)/campaigns/actions"
 
 interface CreateCampaignModalProps {
     isOpen: boolean
@@ -37,6 +38,8 @@ export function CreateCampaignModal({ isOpen, onClose, segments }: CreateCampaig
     const [isPredicting, setIsPredicting] = useState(false)
     const [prediction, setPrediction] = useState<any>(null)
     const [showPreview, setShowPreview] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [errorMsg, setErrorMsg] = useState("")
 
     const handleGenerate = async () => {
         setIsGenerating(true)
@@ -45,6 +48,7 @@ export function CreateCampaignModal({ isOpen, onClose, segments }: CreateCampaig
         setBody(result.body)
         setIsGenerating(false)
         setStep(2)
+        setErrorMsg("")
     }
 
     const handlePredict = async () => {
@@ -52,6 +56,32 @@ export function CreateCampaignModal({ isOpen, onClose, segments }: CreateCampaig
         const result = await predictCampaignPerformance({ name, subject, body, segment: selectedSegment })
         setPrediction(result)
         setIsPredicting(false)
+    }
+
+    const handleFinalize = async () => {
+        setIsSaving(true)
+        setErrorMsg("")
+
+        const segmentData = segments.find(s => s.id === selectedSegment)
+        const segmentCount = segmentData?.count || 0
+
+        const result = await createCampaign({
+            name,
+            subject,
+            segment: selectedSegment,
+            segmentCount,
+            content: body,
+            status: "Scheduled"
+        })
+
+        setIsSaving(false)
+
+        if (result?.success) {
+            onClose()
+            window.location.reload() // Quick refresh to update stats/lists
+        } else {
+            setErrorMsg(result?.error || "Failed to finalize campaign")
+        }
     }
 
     if (!isOpen) return null
@@ -280,10 +310,22 @@ export function CreateCampaignModal({ isOpen, onClose, segments }: CreateCampaig
                                         </div>
                                     </div>
 
+                                    {/* Action Feedback */}
+                                    {errorMsg && (
+                                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] p-4 rounded-2xl font-black uppercase tracking-widest flex items-start gap-3">
+                                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                                            <span className="leading-relaxed">{errorMsg}</span>
+                                        </div>
+                                    )}
+
                                     {/* Submit */}
-                                    <button className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 py-4 rounded-[1.5rem] text-[10px] font-black text-white uppercase tracking-[0.2em] border border-white/5 transition-all">
-                                        FINALIZE & SCHEDULE
-                                        <ArrowRight className="h-4 w-4" />
+                                    <button
+                                        onClick={handleFinalize}
+                                        disabled={isSaving}
+                                        className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 py-4 rounded-[1.5rem] text-[10px] font-black text-white uppercase tracking-[0.2em] border border-white/5 transition-all disabled:opacity-50"
+                                    >
+                                        {isSaving ? "FINALIZING SEQUENCE..." : "FINALIZE & SCHEDULE"}
+                                        {!isSaving && <ArrowRight className="h-4 w-4" />}
                                     </button>
                                 </motion.div>
                             )}

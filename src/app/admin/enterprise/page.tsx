@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import {
     Building2, Search, RefreshCw, ChevronDown, CheckCircle, AlertTriangle,
     XCircle, Shield, Zap, Mail, CreditCard, Eye, Trash2, RotateCcw, X,
-    BanIcon, ChevronUp, Loader2
+    BanIcon, Crown, Loader2, Award, Calculator, DollarSign
 } from "lucide-react"
 
 type Workspace = {
@@ -38,7 +38,7 @@ const STATUS_STYLES: Record<string, string> = {
     unpaid: "text-rose-400",
 }
 
-const PLANS = ["free", "starter", "pro", "enterprise"]
+const PLANS = ["free", "starter", "growth", "pro", "enterprise"]
 const HEALTH_OPTIONS = ["healthy", "warning", "restricted", "suspended"]
 
 // ── Action Panel (slide-in) ───────────────────────────────────────────────────
@@ -54,6 +54,17 @@ function ActionPanel({ ws, onClose, onRefresh }: {
     const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState(false)
+
+    // Cost Calculator State
+    const [calcCredits, setCalcCredits] = useState("")
+    const [calcEmails, setCalcEmails] = useState("")
+    const [calcContacts, setCalcContacts] = useState("")
+
+    const estimatedCost = (
+        (parseInt(calcCredits || "0") / 1000) * 0.50 +
+        (parseInt(calcEmails || "0") / 10000) * 2.00 +
+        (parseInt(calcContacts || "0") / 1000) * 15.00
+    ).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     const showToast = (msg: string, ok = true) => {
         setToast({ msg, ok })
@@ -135,12 +146,16 @@ function ActionPanel({ ws, onClose, onRefresh }: {
             {/* Panel */}
             <div className="w-96 bg-slate-950 border-l border-white/10 overflow-y-auto flex flex-col">
                 {/* Header */}
-                <div className="flex items-start justify-between p-6 border-b border-white/5">
+                <div className="flex items-start justify-between p-6 border-b border-indigo-500/20 bg-indigo-500/5">
                     <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Crown className="h-4 w-4 text-amber-400" />
+                            <div className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Enterprise VIP</div>
+                        </div>
                         <div className="font-black text-white outfit text-lg">{ws.name}</div>
                         <div className="text-xs text-slate-600 font-mono mt-0.5">{ws.id}</div>
                     </div>
-                    <button onClick={onClose} className="text-slate-600 hover:text-white transition-colors mt-1">
+                    <button onClick={onClose} className="text-slate-600 hover:text-white transition-colors mt-1 hover:bg-white/10 p-1 rounded-md">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -162,6 +177,13 @@ function ActionPanel({ ws, onClose, onRefresh }: {
                 )}
 
                 <div className="p-4 space-y-3 flex-1">
+
+                    {/* Enterprise SLA */}
+                    <Section title="Enterprise SLA" highlighted>
+                        <InfoRow label="Dedicated Manager"><span className="text-xs font-black text-indigo-400">Assigned (Auto)</span></InfoRow>
+                        <InfoRow label="Support Tier"><span className="text-xs font-black text-amber-400">24/7 Priority</span></InfoRow>
+                        <InfoRow label="Custom Limits"><span className="text-xs font-black text-emerald-400">Active</span></InfoRow>
+                    </Section>
 
                     {/* Workspace info */}
                     <Section title="Status">
@@ -198,12 +220,12 @@ function ActionPanel({ ws, onClose, onRefresh }: {
                     {/* Suspend / Reactivate */}
                     <Section title="Access Control">
                         {ws.health_status === "suspended" ? (
-                            <ActionBtn icon={CheckCircle} label="Reactivate Workspace" loading={loading === "reactivate"}
+                            <ActionBtn icon={CheckCircle} label="Reactivate Enterprise Account" loading={loading === "reactivate"}
                                 onClick={handleReactivate} variant="success" />
                         ) : (
-                            <ActionBtn icon={BanIcon} label="Suspend Workspace" loading={loading === "suspend"}
+                            <ActionBtn icon={BanIcon} label="Suspend Enterprise Account" loading={loading === "suspend"}
                                 onClick={handleSuspend} variant="danger"
-                                hint="Blocks login, AI requests &amp; email sending" />
+                                hint="Requires Executive Override Approval" />
                         )}
                     </Section>
 
@@ -220,7 +242,36 @@ function ActionPanel({ ws, onClose, onRefresh }: {
                         </div>
                         <ActionBtn icon={RotateCcw} label="Reset Limits to Default" loading={loading === "reset-limits"}
                             onClick={handleResetLimits} variant="neutral"
-                            hint="Sets AI credits → 100, Email limit → 500" />
+                            hint="Sets AI credits → 100k, Email limits → 10M" />
+                    </Section>
+
+                    {/* Custom Quota Calculator */}
+                    <Section title="Quota Cost Estimator" highlighted>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Additional AI Credits ($0.50 / 1k)</label>
+                                <input value={calcCredits} onChange={e => setCalcCredits(e.target.value)} type="number" placeholder="e.g. 50000"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-slate-700 focus:outline-none focus:border-amber-500/50 transition-colors" />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Additional Email Volume ($2.00 / 10k)</label>
+                                <input value={calcEmails} onChange={e => setCalcEmails(e.target.value)} type="number" placeholder="e.g. 1000000"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-slate-700 focus:outline-none focus:border-amber-500/50 transition-colors" />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Additional Contacts ($15.00 / 1k)</label>
+                                <input value={calcContacts} onChange={e => setCalcContacts(e.target.value)} type="number" placeholder="e.g. 50000"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-slate-700 focus:outline-none focus:border-amber-500/50 transition-colors" />
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Calculator className="h-3.5 w-3.5 text-amber-500 shrink-0" /> Estimated MRR Impact
+                                </div>
+                                <div className="text-lg font-black text-white outfit flex items-center gap-1">
+                                    <DollarSign className="h-4 w-4 text-emerald-400 shrink-0" />{estimatedCost} <span className="text-[10px] text-slate-500 uppercase mt-1">/ mo</span>
+                                </div>
+                            </div>
+                        </div>
                     </Section>
 
                     {/* Change Plan */}
@@ -281,7 +332,7 @@ function ActionPanel({ ws, onClose, onRefresh }: {
                             <div className="space-y-2">
                                 <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-300 font-bold">
                                     {ws.subscription_status === "active" && ws.subscription_plan !== "free"
-                                        ? `⚠️ Active paid workspace (${ws.subscription_plan}). This action will be logged. Are you sure?`
+                                        ? `⚠️ Active Enterprise workspace (${ws.subscription_plan}). This action triggers an executive alert. Are you sure?`
                                         : "This workspace will be soft-deleted. Data is preserved but all access is blocked."}
                                 </div>
                                 <div className="flex gap-2">
@@ -306,10 +357,21 @@ function ActionPanel({ ws, onClose, onRefresh }: {
 
 // ── Helper components ─────────────────────────────────────────────────────────
 
-function Section({ title, children, danger = false }: { title: string; children: React.ReactNode; danger?: boolean }) {
+function Section({ title, children, danger = false, highlighted = false }: { title: string; children: React.ReactNode; danger?: boolean; highlighted?: boolean }) {
+    let style = "border-white/[0.05] bg-white/[0.02]"
+    let titleStyle = "text-slate-700"
+
+    if (danger) {
+        style = "border-rose-500/10 bg-rose-500/[0.03]"
+        titleStyle = "text-rose-600"
+    } else if (highlighted) {
+        style = "border-amber-500/20 bg-amber-500/[0.05] shadow-[0_0_15px_rgba(245,158,11,0.05)]"
+        titleStyle = "text-amber-500"
+    }
+
     return (
-        <div className={`rounded-xl border p-4 space-y-3 ${danger ? "border-rose-500/10 bg-rose-500/[0.03]" : "border-white/[0.05] bg-white/[0.02]"}`}>
-            <div className={`text-[9px] font-black uppercase tracking-[0.2em] ${danger ? "text-rose-600" : "text-slate-700"}`}>{title}</div>
+        <div className={`rounded-xl border p-4 space-y-3 ${style}`}>
+            <div className={`text-[9px] font-black uppercase tracking-[0.2em] ${titleStyle}`}>{title}</div>
             {children}
         </div>
     )
@@ -348,7 +410,7 @@ function ActionBtn({ icon: Icon, label, hint, onClick, loading, variant }: {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function AdminWorkspacesPage() {
+export default function AdminEnterprisePage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(true)
@@ -362,7 +424,7 @@ export default function AdminWorkspacesPage() {
         setLoading(true)
         const params = new URLSearchParams({
             page: String(page), limit: String(limit),
-            search, ...(showDeleted ? { include_deleted: "1" } : {}),
+            search, plan: "enterprise", ...(showDeleted ? { include_deleted: "1" } : {}),
         })
         const res = await fetch(`/api/admin/workspaces?${params}`)
         const data = await res.json()
@@ -376,85 +438,111 @@ export default function AdminWorkspacesPage() {
     const totalPages = Math.ceil(total / limit)
 
     return (
-        <div>
+        <div className="space-y-8 pb-12">
             {selectedWs && (
                 <ActionPanel ws={selectedWs} onClose={() => setSelectedWs(null)} onRefresh={load} />
             )}
 
-            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+            {/* Premium Header */}
+            <div className="relative rounded-[2rem] border border-amber-500/20 bg-amber-500/5 p-8 overflow-hidden backdrop-blur-xl">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                    <Shield className="h-32 w-32 text-amber-500" />
+                </div>
+
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(251,191,36,0.4)]">
+                        <Crown className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black outfit text-white tracking-tight">Enterprise Command</h1>
+                        <p className="text-[11px] font-black text-amber-400 uppercase tracking-widest mt-1">Tier-1 Client Management & SLAs</p>
+                    </div>
+                </div>
+
+                <p className="text-sm font-bold text-slate-400 max-w-2xl leading-relaxed">
+                    This sector is restricted to Enterprise operations. Monitor SLA health, manage dedicated limits, and oversee all platform usage for VIP accounts.
+                </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-indigo-400" />
-                    <h1 className="text-2xl font-black outfit text-white">Workspaces</h1>
+                    <Award className="h-5 w-5 text-indigo-400" />
+                    <h2 className="text-xl font-black outfit text-white">VIP Roster</h2>
                     <span className="px-2.5 py-1 bg-white/[0.05] border border-white/5 text-slate-500 text-[11px] font-black rounded-full">{total}</span>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                    <label className="flex items-center gap-2 text-xs text-slate-600 font-bold cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-slate-600 font-bold cursor-pointer hover:text-white transition-colors">
                         <input type="checkbox" checked={showDeleted} onChange={e => setShowDeleted(e.target.checked)}
                             className="accent-indigo-500" />
-                        Show deleted
+                        Show soft-deleted
                     </label>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
                         <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
-                            placeholder="Search workspaces…"
-                            className="bg-slate-900/60 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-white placeholder-slate-700 text-sm font-medium focus:border-indigo-500 focus:outline-none w-56" />
+                            placeholder="Search high-value accounts…"
+                            className="bg-black/30 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-white placeholder-slate-600 text-xs font-bold focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 focus:outline-none w-64 transition-all" />
                     </div>
-                    <button onClick={load} className="p-2 bg-white/[0.03] border border-white/5 rounded-xl hover:border-white/10 text-slate-600 hover:text-white transition-all">
+                    <button onClick={load} className="p-2.5 bg-white/[0.03] border border-white/5 rounded-xl hover:bg-white/[0.05] hover:border-white/10 text-slate-500 hover:text-white transition-all">
                         <RefreshCw className="h-4 w-4" />
                     </button>
                 </div>
             </div>
 
-            <div className="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden">
+            <div className="bg-slate-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="border-b border-white/5">
-                            {["Workspace", "Owner", "Plan / Status", "Health", "AI Credits", "Contacts", "Members", "Actions"].map(h => (
-                                <th key={h} className="text-left text-[10px] font-black uppercase tracking-widest text-slate-600 px-5 py-4">{h}</th>
+                        <tr className="border-b border-white/5 bg-black/40">
+                            {["Account", "Owner", "Status", "Health", "AI Cap", "Audience", "Delegates", "Actions"].map(h => (
+                                <th key={h} className="text-left text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 px-6 py-4">{h}</th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/[0.02]">
                         {loading ? (
-                            <tr><td colSpan={7} className="text-center py-16 text-slate-700 font-bold">Loading…</td></tr>
+                            <tr><td colSpan={8} className="text-center py-16 text-slate-600 font-bold uppercase tracking-widest text-xs">Loading VIP Roster…</td></tr>
                         ) : workspaces.length === 0 ? (
-                            <tr><td colSpan={7} className="text-center py-16 text-slate-700 font-bold">No workspaces found</td></tr>
+                            <tr><td colSpan={8} className="text-center py-16 text-slate-600 font-bold uppercase tracking-widest text-xs">No Enterprise Accounts Onboarded</td></tr>
                         ) : workspaces.map(ws => {
                             const hStyle = HEALTH_STYLES[ws.health_status] ?? HEALTH_STYLES.warning
                             const HIcon = hStyle.icon
                             const isDeleted = !!ws.deleted_at
                             return (
                                 <tr key={ws.id}
-                                    className={`border-b border-white/[0.03] transition-colors
-                                        ${isDeleted ? "opacity-40" : "hover:bg-white/[0.02]"}`}>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div>
-                                                <div className="font-black text-white">{ws.name}</div>
-                                                <div className="text-[10px] text-slate-600 font-mono">{ws.id.slice(0, 14)}…</div>
+                                    className={`transition-colors
+                                        ${isDeleted ? "opacity-30" : "hover:bg-white/[0.02]"}`}>
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                                <Crown className="h-4 w-4 text-amber-500" />
                                             </div>
-                                            {isDeleted && <span className="text-[9px] font-black text-rose-500 uppercase bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded">Deleted</span>}
+                                            <div>
+                                                <div className="font-black text-white text-sm">{ws.name}</div>
+                                                <div className="text-[10px] text-slate-500 font-mono tracking-wider">{ws.id.slice(0, 14)}…</div>
+                                            </div>
+                                            {isDeleted && <span className="text-[9px] font-black text-rose-500 uppercase bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded ml-2">Archived</span>}
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 text-slate-400 font-bold text-xs max-w-[120px] truncate">
+                                    <td className="px-6 py-5 text-slate-400 font-bold text-xs max-w-[120px] truncate">
                                         {ws.owner?.name ?? ws.owner?.email ?? "—"}
                                     </td>
-                                    <td className="px-5 py-4">
-                                        <div className="text-xs font-black text-white uppercase">{ws.subscription_plan}</div>
-                                        <div className={`text-[10px] font-bold ${STATUS_STYLES[ws.subscription_status] ?? "text-slate-600"}`}>{ws.subscription_status}</div>
+                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <div className="text-[10px] font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded uppercase tracking-widest border border-amber-500/20">{ws.subscription_plan}</div>
+                                            <div className={`text-[9px] font-black uppercase tracking-widest ${STATUS_STYLES[ws.subscription_status] ?? "text-slate-600"}`}>{ws.subscription_status}</div>
+                                        </div>
                                     </td>
-                                    <td className="px-5 py-4">
+                                    <td className="px-6 py-5">
                                         <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${hStyle.badge}`}>
                                             <HIcon className="h-3 w-3" />{ws.health_status}
                                         </span>
                                     </td>
-                                    <td className="px-5 py-4 text-slate-400 font-bold text-xs">{ws.ai_credits_remaining.toLocaleString()}</td>
-                                    <td className="px-5 py-4 text-slate-400 font-bold text-xs">{ws._count.contacts.toLocaleString()}</td>
-                                    <td className="px-5 py-4 text-slate-400 font-bold text-xs">{ws._count.members}</td>
-                                    <td className="px-5 py-4">
+                                    <td className="px-6 py-5 text-slate-300 font-black text-xs">{ws.ai_credits_remaining.toLocaleString()}</td>
+                                    <td className="px-6 py-5 text-slate-300 font-black text-xs">{ws._count.contacts.toLocaleString()}</td>
+                                    <td className="px-6 py-5 text-slate-300 font-black text-xs">{ws._count.members}</td>
+                                    <td className="px-6 py-5">
                                         <button onClick={() => setSelectedWs(ws)} disabled={isDeleted}
-                                            className="flex items-center gap-1.5 text-xs font-black text-slate-500 hover:text-white bg-white/[0.03] border border-white/5 px-3 py-1.5 rounded-xl hover:border-indigo-500/30 disabled:opacity-30 transition-all">
-                                            Actions <ChevronDown className="h-3 w-3" />
+                                            className="flex items-center gap-1.5 text-xs font-black text-slate-400 hover:text-white bg-black/40 border border-white/10 px-4 py-2 rounded-xl hover:border-amber-500/40 hover:bg-amber-500/10 transition-all disabled:opacity-30 group">
+                                            Manage <ChevronDown className="h-3 w-3 text-slate-600 transition-colors group-hover:text-amber-500" />
                                         </button>
                                     </td>
                                 </tr>
@@ -466,10 +554,10 @@ export default function AdminWorkspacesPage() {
 
             {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs text-slate-600 font-bold">Page {page} of {totalPages} · {total} workspaces</span>
+                    <span className="text-[10px] tracking-widest uppercase text-slate-500 font-black">Page {page} of {totalPages} — {total} VIP Accounts</span>
                     <div className="flex gap-2">
-                        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs font-black bg-white/[0.03] border border-white/5 rounded-lg text-slate-500 hover:text-white hover:border-white/10 disabled:opacity-30 transition-all">←</button>
-                        <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs font-black bg-white/[0.03] border border-white/5 rounded-lg text-slate-500 hover:text-white hover:border-white/10 disabled:opacity-30 transition-all">→</button>
+                        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-4 py-2 text-xs font-black bg-white/[0.02] border border-white/5 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.05] disabled:opacity-30 transition-all">← PREV</button>
+                        <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-4 py-2 text-xs font-black bg-white/[0.02] border border-white/5 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.05] disabled:opacity-30 transition-all">NEXT →</button>
                     </div>
                 </div>
             )}

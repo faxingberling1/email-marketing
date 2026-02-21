@@ -1,5 +1,6 @@
 "use server"
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 
 // Real DB Action
@@ -7,19 +8,72 @@ export async function createCampaign(data: {
     name: string;
     subject: string;
     segment: string;
+    segmentCount: number;
     content: string;
     status: string;
 }) {
     try {
-        const campaign = await prisma.campaign.create({
-            data: {
-                userId: 'clz1x2c34000008j82k5v6v7w', // Replace with real auth user ID
-                name: data.name,
-                subject: data.subject,
-                aiContent: data.content,
-                status: data.status,
-            }
+        const session = await auth();
+        const userId = session?.user?.id;
+        if (!userId) return { success: false, error: "Unauthorized" };
+
+        // 1. Resolve Tier & Limits
+        const userRows = await prisma.$queryRaw<any[]>`
+            SELECT w.id as "workspaceId", w.subscription_plan, w.email_limit_remaining
+            FROM "User" u
+            JOIN "Workspace" w ON u."workspaceId" = w.id
+            WHERE u.id = ${userId}
+            LIMIT 1
+        `
+        const ws = userRows[0]
+        if (!ws) return { success: false, error: "No active workspace" };
+
+        const { getTierLimits } = await import('@/lib/tiers');
+        const limits = getTierLimits(ws.subscription_plan);
+
+        // 2. Check Workflow/Campaign Limit
+        const campaignCount = await prisma.campaign.count({
+            where: { userId }
         });
+
+        if (campaignCount >= limits.automation_workflows) {
+            return {
+                success: false,
+                error: `Workflow Limit Reached. Your ${ws.subscription_plan} plan allows up to ${limits.automation_workflows} active workflow(s).`,
+                code: "LIMIT_REACHED"
+            };
+        }
+
+        // 3. Check Email Volume Limit
+        if (ws.email_limit_remaining < data.segmentCount) {
+            return {
+                success: false,
+                error: `Email Volume Limit Exceeded. Your plan has ${ws.email_limit_remaining.toLocaleString()} emails remaining, but this segment contains ${data.segmentCount.toLocaleString()} targets.`,
+                code: "LIMIT_REACHED"
+            };
+        }
+
+        const campaign = await prisma.$transaction(async (tx) => {
+            const newCampaign = await tx.campaign.create({
+                data: {
+                    userId,
+                    name: data.name,
+                    subject: data.subject,
+                    aiContent: data.content,
+                    status: data.status,
+                }
+            });
+
+            await tx.$executeRaw`
+                UPDATE "Workspace"
+                SET email_limit_remaining = GREATEST(0, email_limit_remaining - ${data.segmentCount}),
+                    total_emails_sent = total_emails_sent + ${data.segmentCount}
+                WHERE id = ${ws.workspaceId}
+            `;
+
+            return newCampaign;
+        });
+
         return { success: true, campaign };
     } catch (error) {
         console.error("Failed to create campaign:", error);

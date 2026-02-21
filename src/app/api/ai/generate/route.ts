@@ -34,6 +34,24 @@ export async function POST(req: Request) {
         // ── AI generation ─────────────────────────────────────────────────
         const { prompt, industry, audience, offer, tone = 'Professional', language = 'English', cta = '' } = await req.json()
 
+        const workspaceId = user?.workspaceId
+        if (!workspaceId) {
+            return NextResponse.json({ error: "No active workspace found" }, { status: 400 })
+        }
+
+        // 1. Check AI Credits
+        const wsRows = await prisma.$queryRaw<any[]>`
+            SELECT ai_credits_remaining, "subscription_plan" FROM "Workspace" WHERE id = ${workspaceId} LIMIT 1
+        `
+        const ws = wsRows[0]
+        if (!ws || (ws.ai_credits_remaining !== null && ws.ai_credits_remaining <= 0)) {
+            return NextResponse.json({
+                error: "AI Credit Exhausted",
+                code: "CREDIT_LIMIT_REACHED",
+                suggestion: "Upgrade your plan or purchase an add-on."
+            }, { status: 403 })
+        }
+
         const systemInstruction = `You are an elite, high-conversion email marketing AI.
         Your goal is to generate a highly engaging, personalized email campaign.
 
@@ -65,6 +83,20 @@ export async function POST(req: Request) {
         const result = await model.generateContent(`${systemInstruction}\n\n${userPrompt}`)
         const responseText = result.response.text()
         const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim()
+
+        // 2. Deduct Credit & Log Usage
+        await prisma.$transaction([
+            prisma.$executeRaw`
+                UPDATE "Workspace" 
+                SET ai_credits_remaining = GREATEST(0, ai_credits_remaining - 1),
+                    total_ai_used = total_ai_used + 1
+                WHERE id = ${workspaceId}
+            `,
+            prisma.$executeRaw`
+                INSERT INTO "AiUsageLog" (id, "workspaceId", model_used, tokens_used, cost_estimate, created_at)
+                VALUES (gen_random_uuid(), ${workspaceId}, 'gemini-1.5-flash-latest', 1, 0.05, NOW())
+            `
+        ])
 
         return NextResponse.json(JSON.parse(cleanedJSON))
 
