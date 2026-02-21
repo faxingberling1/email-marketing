@@ -17,43 +17,101 @@ import {
     Sparkles
 } from "lucide-react"
 
-export function TrustSection() {
+import { LandingCmsTrustCta } from "../app/admin/cms/tabs/CtaTrustTab"
+import { LandingCmsFooter } from "../app/admin/cms/tabs/FooterTab"
+
+const DEFAULT_TRUST_CTA: LandingCmsTrustCta = {
+    ctaHeading1: "Scale Your Growth ",
+    ctaHeading2: "With Neural Intelligence",
+    ctaSub: "The future of email is now.",
+    btn1: "Start Building",
+    btn2: "Sign In",
+    trustHeading: "Enterprise-Grade Trust & Security",
+    trustSub: "Built to ensure your campaigns reach the inbox safely and securely.",
+    trustItems: [
+        {
+            title: "Maximum Deliverability",
+            desc: "Dedicated IPs and automated SPF/DKIM/DMARC configuration to secure your sender reputation.",
+            icon: "Server"
+        },
+        {
+            title: "GDPR Compliant",
+            desc: "Built-in consent management, right-to-be-forgotten automation, and strict European data processing compliance.",
+            icon: "ShieldCheck"
+        },
+        {
+            title: "Data Security",
+            desc: "End-to-end 256-bit AES encryption for all contact data at rest and in transit.",
+            icon: "Lock"
+        }
+    ]
+}
+
+const DEFAULT_FOOTER: LandingCmsFooter = {
+    brandDesc: "Next-generation email marketing powered by localized intelligence and medical-grade automation scaling.",
+    copyright: "© 2026 MailMind Orbital Systems.",
+    socialTwitter: "#",
+    socialGithub: "#",
+    productLinks: [
+        { label: "Features", href: "/#features" },
+        { label: "Intelligence", href: "/#intelligence" },
+        { label: "Pricing", href: "/#pricing" },
+        { label: "Security", href: "/security" }
+    ],
+    companyLinks: [
+        { label: "Case Studies", href: "/case-studies" },
+        { label: "Neural Blog", href: "/blog" },
+        { label: "Documentation", href: "/docs" },
+        { label: "Support", href: "/support" }
+    ],
+    legalLinks: [
+        { label: "Privacy Policy", href: "/privacy" },
+        { label: "Terms of Service", href: "/terms" },
+        { label: "Security Schema", href: "/security" }
+    ]
+}
+
+const PILLAR_ICONS: any = { Server, ShieldCheck, Lock }
+
+export function TrustSection({ content }: { content?: LandingCmsTrustCta }) {
+    const data = content || DEFAULT_TRUST_CTA
+
     return (
         <section className="py-24 relative bg-slate-900/30 border-y border-white/5">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl font-black text-white outfit mb-4">Enterprise-Grade Trust & Security</h2>
-                    <p className="text-slate-400 font-medium">Built to ensure your campaigns reach the inbox safely and securely.</p>
+                    <h2 className="text-3xl font-black text-white outfit mb-4">{data.trustHeading}</h2>
+                    <p className="text-slate-400 font-medium">{data.trustSub}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-                    <div className="text-center group p-8 rounded-[32px] border border-transparent hover:border-white/5 transition-all hover:bg-white/[0.02]">
-                        <div className="mx-auto h-16 w-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 group-hover:bg-indigo-500/20 transition-all border border-indigo-500/20 group-hover:scale-110 group-hover:rotate-3">
-                            <Server className="h-8 w-8 text-indigo-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Maximum Deliverability</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-bold">Dedicated IPs and automated SPF/DKIM/DMARC configuration to secure your sender reputation.</p>
-                    </div>
-                    <div className="text-center group p-8 rounded-[32px] border border-transparent hover:border-white/5 transition-all hover:bg-white/[0.02]">
-                        <div className="mx-auto h-16 w-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-all border border-emerald-500/20 group-hover:scale-110 group-hover:rotate-3">
-                            <ShieldCheck className="h-8 w-8 text-emerald-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-3 tracking-tight">GDPR Compliant</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-bold">Built-in consent management, right-to-be-forgotten automation, and strict European data processing compliance.</p>
-                    </div>
-                    <div className="text-center group p-8 rounded-[32px] border border-transparent hover:border-white/5 transition-all hover:bg-white/[0.02]">
-                        <div className="mx-auto h-16 w-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 group-hover:bg-blue-500/20 transition-all border border-blue-500/20 group-hover:scale-110 group-hover:rotate-3">
-                            <Lock className="h-8 w-8 text-blue-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Data Security</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-bold">End-to-end 256-bit AES encryption for all contact data at rest and in transit.</p>
-                    </div>
+                    {data.trustItems.map((pillar, i) => {
+                        const Icon = PILLAR_ICONS[pillar.icon] || ShieldCheck
+                        const colors = [
+                            { bg: "bg-indigo-500/10", border: "border-indigo-500/20", hoverBg: "group-hover:bg-indigo-500/20", icon: "text-indigo-400" },
+                            { bg: "bg-emerald-500/10", border: "border-emerald-500/20", hoverBg: "group-hover:bg-emerald-500/20", icon: "text-emerald-400" },
+                            { bg: "bg-blue-500/10", border: "border-blue-500/20", hoverBg: "group-hover:bg-blue-500/20", icon: "text-blue-400" }
+                        ]
+                        const color = colors[i % colors.length]
+
+                        return (
+                            <div key={i} className="text-center group p-8 rounded-[32px] border border-transparent hover:border-white/5 transition-all hover:bg-white/[0.02]">
+                                <div className={`mx-auto h-16 w-16 rounded-2xl ${color.bg} flex items-center justify-center mb-6 transition-all border ${color.border} group-hover:scale-110 group-hover:rotate-3 ${color.hoverBg}`}>
+                                    <Icon className={`h-8 w-8 ${color.icon}`} />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{pillar.title}</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed font-bold">{pillar.desc}</p>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         </section>
     )
 }
 
-export function CTASection() {
+export function CTASection({ content }: { content?: LandingCmsTrustCta }) {
+    const data = content || DEFAULT_TRUST_CTA
+
     return (
         <section className="py-32 relative overflow-hidden bg-slate-950 px-6">
             <div className="max-w-5xl mx-auto">
@@ -71,23 +129,23 @@ export function CTASection() {
                         </div>
 
                         <h2 className="text-4xl md:text-7xl font-black outfit leading-tight text-white mb-6 tracking-tighter">
-                            Scale Your Growth <br className="hidden md:block" />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">With Neural Intelligence</span>
+                            {data.ctaHeading1} <br className="hidden md:block" />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">{data.ctaHeading2}</span>
                         </h2>
 
                         <p className="text-indigo-200/60 text-lg md:text-xl max-w-2xl mx-auto font-black uppercase tracking-widest italic">
-                            The future of email is now.
+                            {data.ctaSub}
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
                             <Link href="/signup" className="group relative overflow-hidden rounded-2xl bg-white px-10 py-5 font-black text-slate-950 hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10">
                                 <span className="relative z-10 flex items-center gap-3 text-sm tracking-[0.2em] uppercase leading-none">
-                                    Start Building
+                                    {data.btn1}
                                     <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </Link>
                             <Link href="/login" className="px-10 py-5 font-black text-white hover:text-indigo-400 transition-colors text-sm tracking-[0.2em] uppercase leading-none">
-                                Sign In
+                                {data.btn2}
                             </Link>
                         </div>
                     </motion.div>
@@ -97,7 +155,9 @@ export function CTASection() {
     )
 }
 
-export function LandingFooter() {
+export function LandingFooter({ content }: { content?: LandingCmsFooter }) {
+    const data = content || DEFAULT_FOOTER
+
     return (
         <footer className="relative pt-32 pb-16 bg-slate-950 overflow-hidden border-t border-white/5">
             {/* Background Aesthetic */}
@@ -118,13 +178,13 @@ export function LandingFooter() {
                         </Link>
 
                         <p className="text-slate-400 font-medium leading-relaxed max-w-sm">
-                            Next-generation email marketing powered by localized intelligence and medical-grade automation scaling.
+                            {data.brandDesc}
                         </p>
 
                         <div className="flex items-center gap-4">
                             {[
-                                { icon: Twitter, href: "#" },
-                                { icon: Github, href: "#" },
+                                { icon: Twitter, href: data.socialTwitter },
+                                { icon: Github, href: data.socialGithub },
                                 { icon: Linkedin, href: "#" }
                             ].map((social, i) => (
                                 <a
@@ -142,13 +202,8 @@ export function LandingFooter() {
                     <div className="md:col-span-2 space-y-8">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Infrastructure</h4>
                         <ul className="space-y-4">
-                            {([
-                                { label: "Features", href: "/#features" },
-                                { label: "Intelligence", href: "/#intelligence" },
-                                { label: "Pricing", href: "/#pricing" },
-                                { label: "Security", href: "/security" },
-                            ] as const).map((link) => (
-                                <li key={link.label}>
+                            {data.productLinks.map((link, idx) => (
+                                <li key={idx}>
                                     <Link href={link.href} className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
                                         {link.label}
                                         <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
@@ -161,13 +216,8 @@ export function LandingFooter() {
                     <div className="md:col-span-2 space-y-8">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Resources</h4>
                         <ul className="space-y-4">
-                            {([
-                                { label: "Case Studies", href: "/case-studies" },
-                                { label: "Neural Blog", href: "/blog" },
-                                { label: "Documentation", href: "/docs" },
-                                { label: "Support", href: "/support" },
-                            ] as const).map((link) => (
-                                <li key={link.label}>
+                            {data.companyLinks.map((link, idx) => (
+                                <li key={idx}>
                                     <Link href={link.href} className="text-slate-400 hover:text-indigo-400 transition-colors font-bold text-sm flex items-center gap-1 group">
                                         {link.label}
                                         <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
@@ -203,14 +253,14 @@ export function LandingFooter() {
                 {/* Bottom Bar */}
                 <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="flex flex-wrap items-center justify-center gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
-                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                        <Link href="/security" className="hover:text-white transition-colors">Security Schema</Link>
+                        {data.legalLinks.map((link, i) => (
+                            <Link key={i} href={link.href} className="hover:text-white transition-colors">{link.label}</Link>
+                        ))}
                     </div>
 
                     <div className="flex flex-col md:items-end gap-2 text-center md:text-right">
                         <div className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
-                            &copy; 2026 MailMind Orbital Systems.
+                            {data.copyright}
                         </div>
                         <div className="text-slate-700 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center md:justify-end gap-2">
                             <div className="h-1 w-1 rounded-full bg-indigo-500" />

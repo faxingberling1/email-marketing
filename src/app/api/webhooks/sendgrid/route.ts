@@ -14,7 +14,7 @@ export async function POST(req: Request) {
             // Update database logically (e.g. increment engagement score)
             if (eventType === 'click' || eventType === 'open') {
                 await prisma.contact.update({
-                    where: { email_userId: { email, userId: 'mock-user-123' } }, // Simple mock logic
+                    where: { userId_email: { email, userId: 'mock-user-123' } } as any,
                     data: { engagementScore: { increment: 1 } }
                 })
             }

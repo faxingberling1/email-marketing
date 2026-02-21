@@ -4,7 +4,26 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { Sparkles, ChevronRight, ArrowRight, User } from "lucide-react"
 
-export function LandingHero() {
+export type LandingCmsData = {
+    badgeText: string;
+    titleLine1: string;
+    titleLine2: string;
+    subtitle: string;
+    primaryCtaText: string;
+    secondaryCtaText: string;
+}
+
+export function LandingHero({ content }: { content?: LandingCmsData }) {
+    // Default fallback if CMS unconfigured
+    const data = content || {
+        badgeText: "AI-Powered Email Marketing",
+        titleLine1: "Personalized. Optimized.",
+        titleLine2: "Automated.",
+        subtitle: "Leverage predictive AI for instant content generation, smart segmentation, and automated campaign optimization. Boost engagement effortlessly.",
+        primaryCtaText: "Get Started Free",
+        secondaryCtaText: "Watch Demo"
+    }
+
     return (
         <section className="relative pt-44 pb-32 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent -z-10" />
@@ -16,7 +35,7 @@ export function LandingHero() {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-bold tracking-wide mb-8"
                 >
                     <Sparkles className="h-4 w-4" />
-                    AI-Powered Email Marketing
+                    {data.badgeText}
                 </motion.div>
 
                 <motion.h1
@@ -25,9 +44,9 @@ export function LandingHero() {
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="text-5xl md:text-7xl font-bold outfit leading-[1.1] mb-8"
                 >
-                    Personalized. Optimized. <br />
+                    {data.titleLine1} <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">
-                        Automated.
+                        {data.titleLine2}
                     </span>
                 </motion.h1>
 
@@ -37,7 +56,7 @@ export function LandingHero() {
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium leading-relaxed"
                 >
-                    Leverage predictive AI for instant content generation, smart segmentation, and automated campaign optimization. Boost engagement effortlessly.
+                    {data.subtitle}
                 </motion.p>
 
                 <motion.div
@@ -48,14 +67,14 @@ export function LandingHero() {
                 >
                     <Link href="/signup" className="group relative overflow-hidden rounded-2xl bg-indigo-600 px-10 py-5 font-black text-white hover:bg-indigo-500 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-indigo-600/30">
                         <span className="relative z-10 flex items-center gap-3 text-sm tracking-[0.2em] uppercase">
-                            Get Started Free
+                            {data.primaryCtaText}
                             <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
                     </Link>
 
                     <Link href="/demo" className="group flex items-center gap-3 text-slate-400 hover:text-white px-8 py-5 font-black text-sm uppercase tracking-[0.2em] transition-colors bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5">
-                        Watch Demo
+                        {data.secondaryCtaText}
                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </motion.div>

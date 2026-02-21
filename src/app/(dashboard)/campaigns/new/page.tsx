@@ -49,10 +49,15 @@ export default function NewCampaignPage() {
 
     const handleFinish = async () => {
         setSaving(true)
+        let segmentCount = 1000;
+        if (formData.segment === "High Value Customers") segmentCount = 250;
+        if (formData.segment === "Enterprise Leads") segmentCount = 150;
+
         const res = await createCampaign({
             name: formData.name,
             subject: formData.subject,
             segment: formData.segment,
+            segmentCount,
             content: formData.content,
             status: 'completed'
         })

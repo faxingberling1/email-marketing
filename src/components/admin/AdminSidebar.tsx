@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import {
     LayoutDashboard, Building2, Users, BrainCircuit,
     ScrollText, Shield, CreditCard, AlertOctagon, Settings,
-    BarChart3, Activity, Zap
+    BarChart3, Activity, Zap, PanelTop
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
@@ -15,6 +15,7 @@ const navItems = [
         section: "PLATFORM OVERVIEW", items: [
             { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
             { href: "/admin/analytics", label: "Executive Metrics", icon: BarChart3 },
+            { href: "/admin/cms", label: "Landing CMS", icon: PanelTop },
         ]
     },
     {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+// @ts-ignore
 import Papa from 'papaparse';
 import { prisma } from '@/lib/db';
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
             email: row.email,
             name: row.name || row.fullname || '',
             tags: row.tags ? row.tags.split(',').map((t: string) => t.trim()) : [],
-        })).filter(c => c.email);
+        })).filter((c: any) => c.email);
 
         const totalIncoming = contacts.length;
         if (contacts.length > remainingSpace) {

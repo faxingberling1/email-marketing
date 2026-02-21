@@ -3,22 +3,31 @@
 import { motion } from "framer-motion"
 import { Star, Quote, ShieldCheck } from "lucide-react"
 
-const testimonials = [
-    {
-        name: "Sarah Jenkins",
-        role: "CMO, Nexus Tech",
-        content: "AI Email Marketing helped us increase open rates by 38% in just one month!",
-        avatar: "SJ"
-    },
-    {
-        name: "David Chen",
-        role: "Founder, Orbital SaaS",
-        content: "The AI recommendations are like having a marketing assistant 24/7.",
-        avatar: "DC"
-    }
-]
+import { LandingCmsTestimonials } from "../app/admin/cms/tabs/TestimonialsTab"
 
-export function Testimonials() {
+const DEFAULT_TESTIMONIALS: LandingCmsTestimonials = {
+    headingLine1: "Trusted by ",
+    headingLine2: "Early Adopters.",
+    companies: "Acme Corp, GlobalTech, Nexus, Quantum, Stark Ind",
+    items: [
+        {
+            name: "Sarah Jenkins",
+            role: "CMO, Nexus Tech",
+            content: "AI Email Marketing helped us increase open rates by 38% in just one month!",
+            avatar: "SJ"
+        },
+        {
+            name: "David Chen",
+            role: "Founder, Orbital SaaS",
+            content: "The AI recommendations are like having a marketing assistant 24/7.",
+            avatar: "DC"
+        }
+    ]
+}
+
+export function Testimonials({ content }: { content?: LandingCmsTestimonials }) {
+    const data = content || DEFAULT_TESTIMONIALS
+
     return (
         <section className="py-32 relative overflow-hidden bg-slate-950">
             {/* Subtle Grid Background */}
@@ -33,22 +42,20 @@ export function Testimonials() {
                         viewport={{ once: true }}
                     >
                         <h2 className="text-4xl md:text-5xl font-black text-white outfit mb-6">
-                            Trusted by <span className="text-indigo-500">Early Adopters.</span>
+                            {data.headingLine1} <span className="text-indigo-500">{data.headingLine2}</span>
                         </h2>
                     </motion.div>
                 </div>
 
                 {/* Logo Strip / Social Proof */}
                 <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-50 grayscale mb-24">
-                    <div className="text-xl font-black outfit tracking-widest uppercase">Acme Corp</div>
-                    <div className="text-xl font-black outfit tracking-widest uppercase">GlobalTech</div>
-                    <div className="text-xl font-black outfit tracking-widest uppercase">Nexus</div>
-                    <div className="text-xl font-black outfit tracking-widest uppercase">Quantum</div>
-                    <div className="text-xl font-black outfit tracking-widest uppercase">Stark Ind</div>
+                    {data.companies.split(',').map((company: string, i: number) => (
+                        <div key={i} className="text-xl font-black outfit tracking-widest uppercase">{company.trim()}</div>
+                    ))}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {testimonials.map((test, i) => (
+                    {data.items.map((test, i) => (
                         <motion.div
                             key={i}
                             initial={{ opacity: 0, y: 30 }}

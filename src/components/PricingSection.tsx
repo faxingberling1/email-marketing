@@ -21,115 +21,121 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-const plans = [
-    {
-        name: "Starter",
-        id: "starter",
-        price: "29",
-        desc: "Best for founders & small lists",
-        accent: "emerald",
-        badge: null,
-        features: [
-            "Up to 1,000 contacts",
-            "10,000 emails / month",
-            "300 AI credits / month",
-            "AI subject line generator",
-            "Basic email generation",
-            "Real-time analytics",
-            "1 automation workflow",
-            "Standard templates",
-            "Email support"
-        ],
-        cta: "Start Free Trial",
-        bestFor: "testing campaigns and small audiences"
-    },
-    {
-        name: "Growth",
-        id: "growth",
-        price: "79",
-        desc: "Built for scaling startups",
-        accent: "blue",
-        badge: "⭐ Most Popular",
-        features: [
-            "Up to 10,000 contacts",
-            "75,000 emails / month",
-            "2,000 AI credits / month",
-            "Advanced AI email generation",
-            "AI segmentation clustering",
-            "Send-time optimization",
-            "A/B testing",
-            "Up to 10 automation workflows",
-            "Retargeting sequences",
-            "Multi-language email generation",
-            "Priority support"
-        ],
-        cta: "Upgrade to Growth",
-        bestFor: "growing teams optimizing engagement"
-    },
-    {
-        name: "Pro",
-        id: "pro",
-        price: "149",
-        desc: "For advanced marketers & performance teams",
-        accent: "purple",
-        badge: null,
-        features: [
-            "Up to 25,000 contacts",
-            "200,000 emails / month",
-            "6,000 AI credits / month",
-            "Predictive performance forecasting",
-            "AI churn risk detection",
-            "Revenue trend insights",
-            "Unlimited automation workflows",
-            "API access",
-            "Webhooks",
-            "Custom branding",
-            "Advanced analytics dashboard"
-        ],
-        cta: "Go Pro",
-        bestFor: "data-driven teams scaling aggressively"
-    },
-    {
-        name: "Enterprise",
-        id: "enterprise",
-        price: "Custom",
-        desc: "For high-volume teams and enterprises",
-        accent: "red",
-        badge: null,
-        features: [
-            "Custom contact limits",
-            "Dedicated AI allocation",
-            "SLA uptime guarantee",
-            "SSO integration",
-            "Dedicated infrastructure",
-            "Custom AI tuning",
-            "Account manager",
-            "Advanced compliance support"
-        ],
-        cta: "Contact Sales",
-        bestFor: "high-volume teams and enterprises"
-    }
-]
+import { LandingCmsPricing } from "../app/admin/cms/tabs/PricingTab"
+
+const DEFAULT_PRICING: LandingCmsPricing = {
+    headingLine1: "Pricing That ",
+    headingLine2: "Scales",
+    subtitle: "Simple Plans. Powerful AI. Predictable Costs.",
+    plans: [
+        {
+            name: "Starter",
+            id: "starter",
+            price: "29",
+            desc: "Best for founders & small lists",
+            accent: "emerald",
+            badge: "",
+            features: [
+                "Up to 1,000 contacts",
+                "10,000 emails / month",
+                "300 AI credits / month",
+                "AI subject line generator",
+                "Basic email generation",
+                "Real-time analytics",
+                "1 automation workflow",
+                "Standard templates",
+                "Email support"
+            ],
+            cta: "Start Free Trial",
+            bestFor: "testing campaigns and small audiences"
+        },
+        {
+            name: "Growth",
+            id: "growth",
+            price: "79",
+            desc: "Built for scaling startups",
+            accent: "blue",
+            badge: "⭐ Most Popular",
+            features: [
+                "Up to 10,000 contacts",
+                "75,000 emails / month",
+                "2,000 AI credits / month",
+                "Advanced AI email generation",
+                "AI segmentation clustering",
+                "Send-time optimization",
+                "A/B testing",
+                "Up to 10 automation workflows",
+                "Retargeting sequences",
+                "Multi-language email generation",
+                "Priority support"
+            ],
+            cta: "Upgrade to Growth",
+            bestFor: "growing teams optimizing engagement"
+        },
+        {
+            name: "Pro",
+            id: "pro",
+            price: "149",
+            desc: "For advanced marketers & performance teams",
+            accent: "purple",
+            badge: "",
+            features: [
+                "Up to 25,000 contacts",
+                "200,000 emails / month",
+                "6,000 AI credits / month",
+                "Predictive performance forecasting",
+                "AI churn risk detection",
+                "Revenue trend insights",
+                "Unlimited automation workflows",
+                "API access",
+                "Webhooks",
+                "Custom branding",
+                "Advanced analytics dashboard"
+            ],
+            cta: "Go Pro",
+            bestFor: "data-driven teams scaling aggressively"
+        },
+        {
+            name: "Enterprise",
+            id: "enterprise",
+            price: "Custom",
+            desc: "For high-volume teams and enterprises",
+            accent: "red",
+            badge: "",
+            features: [
+                "Custom contact limits",
+                "Dedicated AI allocation",
+                "SLA uptime guarantee",
+                "SSO integration",
+                "Dedicated infrastructure",
+                "Custom AI tuning",
+                "Account manager",
+                "Advanced compliance support"
+            ],
+            cta: "Contact Sales",
+            bestFor: "high-volume teams and enterprises"
+        }
+    ],
+    faqs: [
+        {
+            q: "What happens if I exceed AI credits?",
+            a: "You can purchase add-ons or upgrade anytime. We'll notify you when you reach 80% and 100% of your limit."
+        },
+        {
+            q: "What happens if I exceed email limit?",
+            a: "You’ll receive a notification before your limit is reached. You can upgrade to a higher tier instantly to maintain your campaign schedule."
+        },
+        {
+            q: "Do credits roll over?",
+            a: "Plan credits reset monthly on your billing date. Add-on credits are valid for 60 days from purchase."
+        }
+    ]
+}
 
 const aiAddOns = [
     { credits: "500", price: "$10" },
     { credits: "2,000", price: "$35" },
     { credits: "5,000", price: "$75" }
-]
-
-const faqs = [
-    {
-        q: "What happens if I exceed AI credits?",
-        a: "You can purchase add-ons or upgrade anytime. We'll notify you when you reach 80% and 100% of your limit."
-    },
-    {
-        q: "What happens if I exceed email limit?",
-        a: "You’ll receive a notification before your limit is reached. You can upgrade to a higher tier instantly to maintain your campaign schedule."
-    },
-    {
-        q: "Do credits roll over?",
-        a: "Plan credits reset monthly on your billing date. Add-on credits are valid for 60 days from purchase."
-    }
 ]
 
 const COMPARISON_FEATURES = [
@@ -173,7 +179,8 @@ const colorMap: Record<string, { bar: string, checkBg: string, checkBorder: stri
     }
 }
 
-export function PricingSection() {
+export function PricingSection({ content }: { content?: LandingCmsPricing }) {
+    const data = content || DEFAULT_PRICING
     const [openFaq, setOpenFaq] = useState<number | null>(null)
     const [isYearly, setIsYearly] = useState(false)
 
@@ -193,10 +200,10 @@ export function PricingSection() {
                         className="space-y-4"
                     >
                         <h2 className="text-4xl md:text-6xl font-black outfit text-white tracking-tighter">
-                            Pricing That <span className="gradient-text">Scales</span> With You
+                            {data.headingLine1} <span className="gradient-text">{data.headingLine2}</span> With You
                         </h2>
                         <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                            Simple Plans. Powerful AI. Predictable Costs.
+                            {data.subtitle}
                         </p>
                     </motion.div>
 
@@ -223,7 +230,7 @@ export function PricingSection() {
 
                 {/* Plan Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
-                    {plans.map((plan, i) => (
+                    {data.plans.map((plan, i) => (
                         <motion.div
                             key={plan.id}
                             initial={{ opacity: 0, y: 30 }}
@@ -244,7 +251,7 @@ export function PricingSection() {
                             )}
 
                             <div className="mb-8">
-                                <div className={`h-2 w-12 rounded-full mb-6 ${colorMap[plan.accent].bar} shadow-[0_0_15px_rgba(255,255,255,0.1)]`} />
+                                <div className={`h-2 w-12 rounded-full mb-6 ${colorMap[plan.accent]?.bar || 'bg-indigo-500'} shadow-[0_0_15px_rgba(255,255,255,0.1)]`} />
                                 <h3 className="text-2xl font-black outfit text-white mb-2">{plan.name}</h3>
                                 <p className="text-slate-500 text-xs font-bold leading-relaxed mb-6">{plan.desc}</p>
 
@@ -262,8 +269,8 @@ export function PricingSection() {
                             <div className="space-y-4 mb-10 flex-1">
                                 {plan.features.slice(0, 9).map((feature, j) => (
                                     <div key={j} className="flex items-start gap-3 group/item">
-                                        <div className={`mt-1 h-4 w-4 rounded-md flex items-center justify-center ${colorMap[plan.accent].checkBg} border ${colorMap[plan.accent].checkBorder}`}>
-                                            <Check className={`h-3 w-3 ${colorMap[plan.accent].checkIcon}`} />
+                                        <div className={`mt-1 h-4 w-4 rounded-md flex items-center justify-center ${colorMap[plan.accent]?.checkBg || 'bg-indigo-500/10'} border ${colorMap[plan.accent]?.checkBorder || 'border-indigo-500/20'}`}>
+                                            <Check className={`h-3 w-3 ${colorMap[plan.accent]?.checkIcon || 'text-indigo-400'}`} />
                                         </div>
                                         <span className="text-slate-400 text-xs font-medium group-hover/item:text-slate-200 transition-colors">
                                             {feature}
@@ -437,7 +444,7 @@ export function PricingSection() {
                     </div>
 
                     <div className="space-y-4">
-                        {faqs.map((faq, i) => (
+                        {data.faqs.map((faq, i) => (
                             <div key={i} className="group">
                                 <button
                                     onClick={() => setOpenFaq(openFaq === i ? null : i)}

@@ -21,11 +21,11 @@ async function getPlatformHealth() {
         prisma.workspace.aggregate({ _sum: { total_emails_sent: true } as any } as any),
     ])
 
-    const superAdminCount = await prisma.user.count({ where: { global_role: "super_admin" as any } })
+    const superAdminCount = await (prisma.user as any).count({ where: { global_role: "super_admin" } })
 
     return {
-        totalUsers: userStats._count._all,
-        suspendedUsers: userStats._count.is_suspended ? 1 : 0, // Simplified for brevity in this step
+        totalUsers: (userStats as any)._count?._all ?? 0,
+        suspendedUsers: (userStats as any)._count?.is_suspended ? 1 : 0, // Simplified for brevity in this step
         superAdminCount,
         totalWorkspaces: workspaceStats,
         flaggedWorkspaces: risk.warningCount + risk.restrictedCount + risk.suspendedCount,
@@ -42,7 +42,7 @@ async function getPlatformHealth() {
         },
         aiTokens30d: ai.tokensUsed,
         aiCost30d: ai.costEstimate,
-        totalEmailsSent: emailsSent._sum.total_emails_sent ?? 0,
+        totalEmailsSent: (emailsSent as any)?._sum?.total_emails_sent ?? 0,
         risk: {
             ...risk,
             aiSpikeDetected: ai.isSpikeDetected,
