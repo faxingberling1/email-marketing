@@ -1,46 +1,39 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
 import NextAuth from "next-auth"
 import { authConfig } from "./auth.config"
+
+const { auth } = NextAuth(authConfig)
 
 const ADMIN_UI_PREFIX = "/admin"
 const ADMIN_API_PREFIX = "/api/admin"
 
-export default async function middleware(req: NextRequest) {
+export default auth((req) => {
     const { pathname } = req.nextUrl
+    const isLoggedIn = !!req.auth
+    const user = req.auth?.user as any
 
     // ── Admin Security Enforcement (Edge Layer) ───────────────────────────
     if (pathname.startsWith(ADMIN_UI_PREFIX) || pathname.startsWith(ADMIN_API_PREFIX)) {
         const isApi = pathname.startsWith(ADMIN_API_PREFIX)
 
-        const token = await getToken({
-            req,
-            secret: process.env.NEXTAUTH_SECRET,
-        })
-
-        if (!token?.id) {
-            if (isApi) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 })
-            return NextResponse.redirect(new URL("/login", req.url))
+        if (!isLoggedIn) {
+            if (isApi) return Response.json({ error: "Unauthenticated" }, { status: 401 })
+            return Response.redirect(new URL("/login", req.url))
         }
 
-        const role = token.global_role as string | undefined
-        const suspended = token.is_suspended as boolean | undefined
+        const role = user?.global_role
+        const suspended = user?.is_suspended
 
         // Block suspended users or non-admins
         if (suspended || role !== "super_admin") {
             const errorMsg = suspended ? "Account suspended" : "Forbidden: super_admin role required"
 
-            if (isApi) return NextResponse.json({ error: errorMsg }, { status: 403 })
-            return NextResponse.redirect(new URL("/dashboard", req.url))
+            if (isApi) return Response.json({ error: errorMsg }, { status: 403 })
+            return Response.redirect(new URL("/dashboard", req.url))
         }
-
-        return NextResponse.next()
     }
-
-    // ── Standard NextAuth guard for all other routes ──────────────────────
-    return NextAuth(authConfig).auth(req as any)
-}
+})
 
 export const config = {
     matcher: [
