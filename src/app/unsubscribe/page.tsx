@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { ShieldAlert, CheckCircle2, Loader2, MailQuestion } from "lucide-react"
 import { unsubscribeContact } from "./actions"
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
     const searchParams = useSearchParams()
     const id = searchParams.get("id")
     const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading")
@@ -101,5 +101,18 @@ export default function UnsubscribePage() {
                 )}
             </motion.div>
         </div>
+    )
+}
+
+export default function UnsubscribePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center font-black outfit text-white uppercase tracking-widest">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mr-4" />
+                Establishing Uplink...
+            </div>
+        }>
+            <UnsubscribeContent />
+        </Suspense>
     )
 }
