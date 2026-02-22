@@ -77,7 +77,7 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router, Server Components)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) (Experimental features enabled)
 - **Visuals**: Framer Motion, Lucide React, Recharts (Tactical visualization)
-- **Database**: [Supabase](https://supabase.com/) & [Prisma](https://www.prisma.io/)
+- **Database**: [Neon Postgres](https://neon.tech/) & [Prisma](https://www.prisma.io/)
 - **AI Core**: [Google Gemini Flash AI](https://deepmind.google/technologies/gemini/)
 - **Infrastructure**: [Stripe](https://stripe.com/) (Billing), [SendGrid](https://sendgrid.com/) (SMTP Relay)
 
@@ -86,7 +86,7 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 ## 🚀 Deployment & Operations
 
 ### Deployment Requirements
-1. **Database**: PostgreSQL (Supabase recommended).
+1. **Database**: PostgreSQL (Neon recommended for serverless pooling).
 2. **AI**: Google Cloud project with Generative AI API enabled.
 3. **Email**: Verified SendGrid sender identity.
 4. **Billing**: Stripe account with active webhook endpoint.
@@ -118,8 +118,6 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Access key for Gemini AI operations |
 | `STRIPE_SECRET_KEY` | Backend billing integration |
 | `SENDGRID_API_KEY` | Secure relay for outgoing missions |
-| `NEXT_PUBLIC_SUPABASE_URL` | Frontend database connectivity |
-
 ---
 
 ## 🎨 Design Philosophy: Glassmorphism 3.0
