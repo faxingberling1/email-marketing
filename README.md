@@ -1,6 +1,6 @@
-# 🚀 Mission Control: Advanced Email Marketing & Automation
+# 🚀 MailMind: Advanced Email Marketing & Automation
 
-Mission Control is a high-performance, AI-integrated email marketing platform engineered for modern marketing operations. It combines a premium "Command Center" aesthetic with cutting-edge technologies to deliver strategic outreach with tactical precision.
+MailMind is a high-performance, AI-integrated email marketing platform engineered for modern marketing operations. It combines a premium "Command Center" aesthetic with cutting-edge technologies to deliver strategic outreach with tactical precision.
 
 ![Aesthetic](https://img.shields.io/badge/Aesthetic-Glassmorphism%203.0-blueviolet)
 ![Next.js](https://img.shields.io/badge/Next.js-15%2B-black)
@@ -35,7 +35,7 @@ email-marketing/
 
 ## 💎 Core Features & Capabilities
 
-### 📡 Mission Dashboard
+### 📡 MailMind Dashboard
 Real-time command center providing a high-level overview of workspace health, campaign performance, and AI resource consumption.
 - **HUD Metrics**: Tactical display of engagement scores and conversion rates.
 - **Activity Feed**: Live audit logs of all mission-critical actions.
@@ -124,7 +124,7 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 
 ## 🎨 Design Philosophy: Glassmorphism 3.0
 
-Mission Control is built on **Glassmorphism 3.0** principles:
+MailMind is built on **Glassmorphism 3.0** principles:
 - **Translucency**: Multi-layered backdrop filters for depth perception.
 - **Vibrant Mesh Gradients**: Dynamic atmospheric backgrounds.
 - **Interactive HUD**: Micro-animations and glow effects for tactile feedback.
