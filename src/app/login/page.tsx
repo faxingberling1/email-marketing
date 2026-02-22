@@ -41,10 +41,19 @@ export default function LoginPage() {
 
     // After sign-in, fetch the real DB role and redirect accordingly
     const resolveRedirect = async () => {
-        const res = await fetch("/api/auth/me")
-        const { role } = await res.json()
-        router.push(role === "super_admin" ? "/admin" : "/dashboard")
-        router.refresh()
+        try {
+            const res = await fetch("/api/auth/me")
+            if (!res.ok) {
+                throw new Error(`Auth API returned ${res.status}`)
+            }
+            const { role } = await res.json()
+            router.push(role === "super_admin" ? "/admin" : "/dashboard")
+            router.refresh()
+        } catch (err) {
+            console.error(err)
+            setErrorMsg("Redirection failed. Please refresh the page.")
+            setLoading(false)
+        }
     }
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -52,17 +61,23 @@ export default function LoginPage() {
         setLoading(true)
         setErrorMsg("")
 
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        })
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            })
 
-        if (result?.error) {
-            setErrorMsg("Authentication failed. Check your credentials and try again.")
+            if (result?.error) {
+                setErrorMsg("Authentication failed. Check your credentials and try again.")
+                setLoading(false)
+            } else {
+                await resolveRedirect()
+            }
+        } catch (err) {
+            console.error(err)
+            setErrorMsg("An unexpected error occurred during login.")
             setLoading(false)
-        } else {
-            await resolveRedirect()
         }
     }
 
