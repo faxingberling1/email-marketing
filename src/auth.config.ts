@@ -21,5 +21,21 @@ export const authConfig = {
 
             return true
         },
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id
+                token.global_role = (user as any).global_role
+                token.is_suspended = (user as any).is_suspended
+            }
+            return token
+        },
+        async session({ session, token }) {
+            if (token && session.user) {
+                session.user.id = token.id as string
+                session.user.global_role = token.global_role as string
+                session.user.is_suspended = token.is_suspended as boolean
+            }
+            return session
+        }
     },
 } satisfies NextAuthConfig

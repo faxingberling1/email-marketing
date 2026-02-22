@@ -35,6 +35,8 @@ export async function createCampaign(data: {
     segment: string;
     segmentCount: number;
     status: string;
+    type?: 'BROADCAST' | 'AUTOMATION';
+    sequences?: any[];
 }) {
     try {
         const session = await auth();
@@ -82,13 +84,25 @@ export async function createCampaign(data: {
         }
 
         const campaign = await prisma.$transaction(async (tx) => {
-            const newCampaign = await tx.campaign.create({
+            const newCampaign = await (tx as any).campaign.create({
                 data: {
                     userId,
                     name: data.name,
                     subject: data.subject,
                     aiContent: data.content,
                     status: data.status.toUpperCase(),
+                    type: data.type || 'BROADCAST',
+                    segmentCount: data.segmentCount, // Added segmentCount
+                    sequences: data.sequences && data.sequences.length > 0 ? {
+                        create: data.sequences.map((s, i: number) => ({
+                            stepNumber: i + 1,
+                            triggerEvent: s.triggerEvent || 'delay',
+                            delayTime: s.delayTime || 0,
+                            subject: s.subject || null,
+                            aiContent: s.content || null,
+                            status: 'active'
+                        }))
+                    } : undefined
                 }
             });
 

@@ -35,10 +35,14 @@ email-marketing/
 
 ## 💎 Core Features & Capabilities
 
-### 📡 MailMind Dashboard
-Real-time command center providing a high-level overview of workspace health, campaign performance, and AI resource consumption.
 - **HUD Metrics**: Tactical display of engagement scores and conversion rates.
 - **Activity Feed**: Live audit logs of all mission-critical actions.
+
+### 🏛️ Super-Admin HQ
+Centralized control center for platform-wide oversight and system administration.
+- **Strategic Telemetry**: Real-time aggregated data across all workspaces and users.
+- **Admin HUD**: Direct monitoring of system health, AI throughput, and payment status.
+- **Genome Control**: Advanced user and workspace management for global orchestration.
 
 ### 🛰️ Campaign Command
 Comprehensive suite for building and deploying high-impact email campaigns.
@@ -79,7 +83,7 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 - **Visuals**: Framer Motion, Lucide React, Recharts (Tactical visualization)
 - **Database**: [Neon Postgres](https://neon.tech/) & [Prisma](https://www.prisma.io/)
 - **AI Core**: [Google Gemini Flash AI](https://deepmind.google/technologies/gemini/)
-- **Infrastructure**: [Stripe](https://stripe.com/) (Billing), [SendGrid](https://sendgrid.com/) (SMTP Relay)
+- **Infrastructure**: [Stripe](https://stripe.com/) (Billing), [Resend](https://resend.com/) (Email Delivery)
 
 ---
 
@@ -88,7 +92,7 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 ### Deployment Requirements
 1. **Database**: PostgreSQL (Neon recommended for serverless pooling).
 2. **AI**: Google Cloud project with Generative AI API enabled.
-3. **Email**: Verified SendGrid sender identity.
+3. **Email**: [Resend](https://resend.com/) API key and verified domain.
 4. **Billing**: Stripe account with active webhook endpoint.
 
 ### Installation
@@ -115,9 +119,8 @@ The platform utilizes a robust PostgreSQL schema managed via Prisma ORM.
 | :--- | :--- |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | Security hash for session management |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Access key for Gemini AI operations |
+| `RESEND_API_KEY` | Access key for Resend email delivery |
 | `STRIPE_SECRET_KEY` | Backend billing integration |
-| `SENDGRID_API_KEY` | Secure relay for outgoing missions |
 ---
 
 ## 🎨 Design Philosophy: Glassmorphism 3.0

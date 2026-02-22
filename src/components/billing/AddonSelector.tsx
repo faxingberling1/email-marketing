@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Zap, ShoppingCart, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { purchaseAddon } from "@/app/(dashboard)/billing/actions"
 
 const ADDONS = [
     { id: 'ai_100', name: '100 AI Credits', price: '$10', desc: 'Short-term tactical capacity.' },
@@ -13,9 +14,18 @@ const ADDONS = [
 export function AddonSelector() {
     const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
 
-    const handlePurchase = (id: string) => {
+    const handlePurchase = async (id: string) => {
         setIsPurchasing(id)
-        setTimeout(() => setIsPurchasing(null), 2000)
+        try {
+            const result = await purchaseAddon(id)
+            if (result.success) {
+                // Tactical success feedback could be added here
+            }
+        } catch (error) {
+            console.error("Purchase protocol failed:", error)
+        } finally {
+            setIsPurchasing(null)
+        }
     }
 
     return (

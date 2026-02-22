@@ -94,6 +94,7 @@ model Workspace {
   users                 User[]                @relation("WorkspacePrimaryUsers")
   owner                 User?                 @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members               WorkspaceMember[]
+  verifiedDomains       VerifiedDomain[]
 
   @@index([health_status])
   @@index([subscription_status])
@@ -166,6 +167,8 @@ model Contact {
   updatedAt       DateTime @updatedAt
   businessName    String?
   phone           String?
+  subscribed      Boolean  @default(true)
+  unsubscribedAt  DateTime?
   user            User     @relation(fields: [userId], references: [id])
   emails          Email[]
 
@@ -182,6 +185,7 @@ model Campaign {
   status       String     @default("draft")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  type         CampaignType @default(BROADCAST)
   user         User       @relation(fields: [userId], references: [id])
   emails       Email[]
   sequences    Sequence[]
@@ -204,11 +208,19 @@ model Sequence {
   id           String   @id @default(cuid())
   campaignId   String
   stepNumber   Int
-  triggerEvent String
+  triggerEvent String   @default("delay") // delay, opened, clicked
+  delayTime    Int      @default(0) // in minutes
+  subject      String?
   aiContent    String?
-  delayTime    Int      @default(0)
+  status       String   @default("active")
   createdAt    DateTime @default(now())
-  campaign     Campaign @relation(fields: [campaignId], references: [id])
+  updatedAt    DateTime @updatedAt
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+enum CampaignType {
+  BROADCAST
+  AUTOMATION
 }
 
 enum GlobalRole {
@@ -236,4 +248,19 @@ enum SubscriptionStatus {
   past_due
   canceled
   unpaid
+}
+
+model VerifiedDomain {
+  id          String    @id @default(cuid())
+  domain      String
+  resendId    String    @unique
+  status      String    @default("pending") // pending, verified, failed
+  dkimRecords Json      @default("[]")
+  workspaceId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([status])
 }

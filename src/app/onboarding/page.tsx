@@ -261,7 +261,7 @@ export default function OnboardingPage() {
                                 disabled={loading}
                                 className="group flex items-center gap-3 mx-auto px-12 py-6 bg-white text-slate-950 rounded-[30px] font-black text-xl hover:bg-slate-100 transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
-                                {loading ? <Loader2 className="h-7 w-7 animate-spin" /> : <>Enter Mission Control <Rocket className="h-7 w-7" /></>}
+                                {loading ? <Loader2 className="h-7 w-7 animate-spin" /> : <>Enter Command Center <Rocket className="h-7 w-7" /></>}
                             </button>
                         </motion.div>
                     )}

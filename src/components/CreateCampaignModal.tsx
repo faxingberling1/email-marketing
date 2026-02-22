@@ -13,6 +13,7 @@ import { StepAudience } from "./campaigns/StepAudience"
 import { StepOptimization } from "./campaigns/StepOptimization"
 import { StepReview } from "./campaigns/StepReview"
 import { StepLaunch } from "./campaigns/StepLaunch"
+import { StepSequence } from "./campaigns/StepSequence"
 
 import { getTemplates } from "@/app/(dashboard)/templates/actions"
 import { createCampaign } from "@/app/(dashboard)/campaigns/actions"
@@ -39,7 +40,8 @@ export function CreateCampaignModal({ isOpen, onClose, segments, plan, quotas }:
         templateId: "",
         audienceId: "",
         optimization: { abTesting: false, sendTimeOptimization: false },
-        launch: { scheduleLaunch: false, launchTime: "" }
+        launch: { scheduleLaunch: false, launchTime: "" },
+        sequences: [] as any[]
     })
 
     useEffect(() => {
@@ -60,7 +62,9 @@ export function CreateCampaignModal({ isOpen, onClose, segments, plan, quotas }:
             content: "Generative Content (DRAFT)",
             segment: data.audienceId || "seg-all",
             segmentCount: selectedSegment?.count || 1000,
-            status: "DRAFT"
+            status: "DRAFT",
+            type: data.type as any,
+            sequences: data.sequences
         })
         setIsLoading(false)
         if (result.success) onClose()
@@ -119,16 +123,25 @@ export function CreateCampaignModal({ isOpen, onClose, segments, plan, quotas }:
                                 {step === 4 && <StepAudience segments={segments} selectedId={data.audienceId} onSelect={id => setData({ ...data, audienceId: id })} plan={plan} />}
                                 {step === 5 && <StepOptimization config={data.optimization} onChange={opt => setData({ ...data, optimization: opt })} plan={plan} />}
                                 {step === 6 && (
-                                    <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                                        <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                                            <Info className="h-8 w-8 text-slate-700" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-black text-white uppercase tracking-widest">Sequence Configuration</h4>
-                                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest max-w-sm">
-                                                {data.type === 'AUTOMATION' ? 'Configure logic-based branching for this drip sequence.' : 'Sequence configuration is only available for Automation campaigns.'}
-                                            </p>
-                                        </div>
+                                    <div className="h-full">
+                                        {data.type === 'AUTOMATION' ? (
+                                            <StepSequence
+                                                steps={data.sequences}
+                                                onChange={seq => setData({ ...data, sequences: seq })}
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                                                <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                                                    <Info className="h-8 w-8 text-slate-700" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Single Broadcast Mode</h4>
+                                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest max-w-sm">
+                                                        Sequences are only available for Automation campaigns. Continue to Review.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 {step === 7 && <StepReview data={data} quotas={quotas} />}

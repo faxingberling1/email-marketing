@@ -1,8 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { CheckCircle2, ChevronRight, Zap } from "lucide-react"
+import { CheckCircle2, ChevronRight, Zap, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
+import { useSession } from "next-auth/react"
 
 const tiers = [
     {
@@ -28,7 +30,7 @@ const tiers = [
             "Automation triggers",
             "Advanced analytics"
         ],
-        cta: "Get Started Free",
+        cta: "Upgrade to Growth",
         popular: true
     },
     {
@@ -42,34 +44,54 @@ const tiers = [
             "Premium templates",
             "Integrations"
         ],
-        cta: "Get Started Free",
+        cta: "Go Unlimited",
         popular: false
     }
 ]
 
 export function PricingTable() {
+    const { data: session } = useSession()
+    const [loadingTier, setLoadingTier] = useState<string | null>(null)
+
+    const handleUpgrade = async (planName: string) => {
+        if (!session?.user?.id) {
+            alert("Authentication Required: Please log in to upgrade your protocol.")
+            return
+        }
+
+        setLoadingTier(planName)
+        try {
+            const response = await fetch("/api/billing/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    planName,
+                    workspaceId: (session.user as any).workspaceId || session.user.id, // Fallback to user ID if workspace not found
+                    userId: session.user.id,
+                    customerEmail: session.user.email,
+                }),
+            })
+
+            const data = await response.json()
+
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                throw new Error(data.error || "Failed to initiate tactical deployment.")
+            }
+        } catch (error: any) {
+            alert(`Protocol Error: ${error.message}`)
+        } finally {
+            setLoadingTier(null)
+        }
+    }
+
     return (
-        <section id="pricing" className="py-32 relative overflow-hidden bg-slate-950">
+        <section id="pricing" className="py-20 relative overflow-hidden bg-slate-950/50 rounded-[3rem] border border-white/5">
             {/* Background Mesh Gradient */}
             <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent -z-10" />
-            <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent -z-10" />
 
             <div className="max-w-7xl mx-auto px-6">
-                <div className="text-center mb-24 relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <h2 className="text-4xl md:text-5xl font-black text-white outfit mb-6">
-                            Scalable <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Pricing.</span>
-                        </h2>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
-                            Clear and competitive pricing tiers.
-                        </p>
-                    </motion.div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto relative z-10">
                     {tiers.map((tier, i) => (
                         <motion.div
@@ -114,17 +136,28 @@ export function PricingTable() {
                                 ))}
                             </div>
 
-                            <button className={cn(
-                                "group relative w-full overflow-hidden rounded-2xl py-4 font-black transition-all hover:scale-[1.02] active:scale-[0.98]",
-                                tier.popular
-                                    ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/30 hover:bg-indigo-500"
-                                    : "bg-white/5 text-white hover:bg-white/10"
-                            )}>
+                            <button
+                                onClick={() => handleUpgrade(tier.name)}
+                                disabled={loadingTier === tier.name}
+                                className={cn(
+                                    "group relative w-full overflow-hidden rounded-2xl py-4 font-black transition-all hover:scale-[1.02] active:scale-[0.98]",
+                                    tier.popular
+                                        ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/30 hover:bg-indigo-500"
+                                        : "bg-white/5 text-white hover:bg-white/10",
+                                    loadingTier === tier.name && "opacity-50 cursor-not-allowed"
+                                )}
+                            >
                                 <span className="relative z-10 flex items-center justify-center gap-2 text-xs tracking-[0.2em] uppercase">
-                                    {tier.cta}
-                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                    {loadingTier === tier.name ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <>
+                                            {tier.cta}
+                                            <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                        </>
+                                    )}
                                 </span>
-                                {tier.popular && (
+                                {tier.popular && !loadingTier && (
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform" />
                                 )}
                             </button>

@@ -9,7 +9,6 @@ import {
     Target,
     Zap,
     Radar,
-    ActivitySquare,
     Globe,
     Calendar,
     Filter,
@@ -62,7 +61,7 @@ export default function AnalyticsPage() {
             >
                 <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        <ActivitySquare className="h-6 w-6" />
+                        <BarChart3 className="h-6 w-6" />
                     </div>
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Analytics</p>

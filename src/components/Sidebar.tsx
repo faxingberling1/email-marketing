@@ -113,7 +113,7 @@ export function Sidebar() {
                         animate={{ opacity: 1, x: 0 }}
                         className="text-xl font-bold tracking-tight text-white outfit whitespace-nowrap"
                     >
-                        AEM<span className="text-indigo-500">.AI</span>
+                        Mail<span className="text-indigo-500">Mind</span>
                     </motion.span>
                 )}
             </div>

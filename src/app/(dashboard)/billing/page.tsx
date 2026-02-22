@@ -1,207 +1,185 @@
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { getTierLimits } from "@/lib/tiers";
-import { CreditCard, Zap, Mail, Users, CheckCircle2, ArrowRight, Download, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { PlanSelector } from "@/components/billing/PlanSelector";
-import { AddonSelector } from "@/components/billing/AddonSelector";
-import { ManageSubscriptionButtons } from "@/components/billing/ManageSubscriptionButtons";
-import { InvoiceHistory } from "@/components/billing/InvoiceHistory";
-import { ensureUserWorkspace } from "@/app/auth/actions";
+"use client"
 
-export default async function BillingPage() {
-    const session = await auth();
-    if (!session?.user?.id) redirect("/login");
+import { motion } from "framer-motion"
+import { CreditCard, Zap, ShieldCheck, ArrowRight, BarChart3, Clock, Sparkles } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
+import { getSidebarData } from "@/app/(dashboard)/sidebar-actions"
+import { PricingTable } from "@/components/PricingTable"
+import { ManageSubscriptionButtons } from "@/components/billing/ManageSubscriptionButtons"
+import { AddonSelector } from "@/components/billing/AddonSelector"
+import { cn } from "@/lib/utils"
 
-    // Auto-create workspace if user doesn't have one (self-healing)
-    await ensureUserWorkspace(session.user.id);
+export default function BillingPage() {
+    const { data: session } = useSession()
+    const [dynamicData, setDynamicData] = useState<any>(null)
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: { workspace: true }
-    });
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getSidebarData()
+            if (data) setDynamicData(data)
+        }
+        fetchData()
+    }, [])
 
-    if (!user?.workspace) {
-        redirect("/dashboard"); // Should never happen after ensureUserWorkspace
+    const currentPlan = dynamicData?.quotas?.plan || "Free"
+    const aiUsage = dynamicData?.quotas?.ai || { used: 0, limit: 100, remaining: 100 }
+    const emailUsage = dynamicData?.quotas?.emails || { used: 0, limit: 1000, remaining: 1000 }
+
+    const usagePercent = (used: number, limit: number) => {
+        return Math.min(Math.round((used / limit) * 100), 100)
     }
 
-    const ws = user.workspace as any;
-    const limits = getTierLimits(ws.subscription_plan);
-
-    const usage = [
-        {
-            name: "Audience Contacts",
-            icon: Users,
-            current: await prisma.contact.count({ where: { userId: user.id } }),
-            limit: limits.contacts,
-            color: "text-indigo-400",
-            bg: "bg-indigo-500/10"
-        },
-        {
-            name: "Monthly Emails",
-            icon: Mail,
-            current: ws.total_emails_sent, // This is all-time in schema, but we'll use it for now as placeholder
-            limit: limits.emails_per_month,
-            color: "text-sky-400",
-            bg: "bg-sky-500/10"
-        },
-        {
-            name: "AI Credits",
-            icon: Zap,
-            current: ws.total_ai_used,
-            limit: limits.ai_credits_per_month,
-            color: "text-amber-400",
-            bg: "bg-amber-500/10"
-        }
-    ];
-
     return (
-        <div className="space-y-12 pb-32">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-white outfit flex items-center gap-3">
-                        <CreditCard className="h-10 w-10 text-indigo-400" />
-                        Billing Control
-                    </h1>
-                    <p className="text-slate-500 text-sm font-bold mt-1">Scale your reach with AI-powered tiers and add-ons.</p>
-                </div>
-                <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 px-4 py-2 rounded-2xl">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Workspace Health:</span>
-                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                    <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">Active</span>
-                </div>
-            </div>
-
-            {/* Current Status Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-slate-900/40 border border-white/5 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8">
-                        <div className="h-24 w-24 rounded-3xl bg-indigo-500/5 flex items-center justify-center border border-indigo-500/10 rotate-12 transition-transform group-hover:rotate-6">
-                            <CreditCard className="h-12 w-12 text-indigo-500/30" />
-                        </div>
-                    </div>
-
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-6">
-                            <span className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                                Active Subscription
-                            </span>
-                        </div>
-
-                        <div className="flex items-baseline gap-3 mb-2">
-                            <h2 className="text-6xl font-black text-white outfit capitalize">
-                                {ws.subscription_plan}
-                            </h2>
-                            <span className="text-slate-500 font-black text-lg outfit italic">Tier</span>
-                        </div>
-
-                        <p className="text-slate-400 font-medium mb-10 max-w-md leading-relaxed">
-                            Your workspace is currently leveraging the <span className="text-white font-bold">{ws.subscription_plan}</span> infrastructure.
-                            Next billing cycle begins on <span className="text-indigo-400 font-bold">March 1st, 2024</span>.
-                        </p>
-
-                        <ManageSubscriptionButtons />
-                    </div>
-                </div>
-
-                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 flex flex-col justify-between">
+        <div className="space-y-10 pb-20">
+            {/* Header Section */}
+            <div className="relative">
+                <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                     <div>
-                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-8">Resource Consumption</h3>
-                        <div className="space-y-8">
-                            {usage.map((u) => (
-                                <div key={u.name}>
-                                    <div className="flex items-center justify-between mb-2.5">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`h-8 w-8 rounded-lg ${u.bg} flex items-center justify-center`}>
-                                                <u.icon className={`h-4 w-4 ${u.color}`} />
-                                            </div>
-                                            <span className="text-xs font-black text-slate-300 uppercase tracking-wider">{u.name}</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-sm font-black text-white">
-                                                {((u.current / u.limit) * 100).toFixed(0)}%
-                                            </div>
-                                            <div className="text-[10px] text-slate-500 font-bold">
-                                                {u.current.toLocaleString()} / {u.limit.toLocaleString()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="h-2 w-full bg-slate-850 rounded-full overflow-hidden border border-white/[0.03]">
-                                        <div
-                                            className={`h-full ${u.color.replace('text', 'bg')} rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.1)]`}
-                                            style={{ width: `${Math.min(100, (u.current / u.limit) * 100)}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-8 w-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                                <CreditCard className="h-4 w-4 text-indigo-400" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400/80">Financial Ops</span>
                         </div>
+                        <h1 className="text-4xl font-black text-white outfit uppercase italic tracking-tight">Billing <span className="text-slate-500">Protocol</span></h1>
                     </div>
                 </div>
             </div>
 
-            {/* Plan Selection */}
-            <section className="pt-12 border-t border-white/5">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-black text-white outfit mb-2">Platform Tiers</h2>
-                    <p className="text-slate-500 font-bold">Select the engine that fits your scale.</p>
-                </div>
-                <PlanSelector currentPlan={ws.subscription_plan} />
-            </section>
-
-            {/* Add-ons */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                            <Zap className="h-6 w-6 text-amber-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black text-white outfit">AI Credit Add-ons</h3>
-                            <p className="text-slate-500 text-xs font-bold">Neural allocation for your workspace.</p>
-                        </div>
+            {/* Current Plan Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Zap className="h-32 w-32 text-indigo-500" />
                     </div>
 
+                    <div className="flex flex-col md:flex-row gap-10 relative z-10">
+                        <div className="flex-1">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Active Command Tier</h3>
+                            <div className="flex items-center gap-4 mb-4">
+                                <span className="text-5xl font-black text-white outfit uppercase italic">{currentPlan}</span>
+                                <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                                    Operational
+                                </div>
+                            </div>
+                            <p className="text-slate-400 text-sm font-medium mb-10 max-w-md">
+                                Your account is currently running on the <span className="text-white font-bold">{currentPlan}</span> protocol.
+                                High-priority AI nodes and unlimited sequences are available in higher tiers.
+                            </p>
+                            <ManageSubscriptionButtons />
+                        </div>
+
+                        <div className="w-full md:w-72 space-y-6">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Resource Utilization</h3>
+
+                            {/* AI Credits Usage */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="h-3 w-3 text-indigo-400" />
+                                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Neural Credits</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-500">{aiUsage.used} / {aiUsage.limit}</span>
+                                </div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${usagePercent(aiUsage.used, aiUsage.limit)}%` }}
+                                        className="h-full bg-gradient-to-r from-indigo-600 to-purple-600"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Email Usage */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <div className="flex items-center gap-2">
+                                        <BarChart3 className="h-3 w-3 text-emerald-400" />
+                                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Relay Quota</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-500">{emailUsage.used} / {emailUsage.limit}</span>
+                                </div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${usagePercent(emailUsage.used, emailUsage.limit)}%` }}
+                                        className="h-full bg-gradient-to-r from-emerald-600 to-cyan-600"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-8 rounded-[2.5rem] bg-indigo-600/10 border border-indigo-500/20 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center text-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none" />
+                    <Clock className="h-10 w-10 text-indigo-400 mx-auto mb-6 opacity-50" />
+                    <h4 className="text-xl font-black text-white outfit mb-2">Next Renewal</h4>
+                    <p className="text-slate-400 text-sm font-medium mb-6">Your next tactical cycle begins in</p>
+                    <div className="text-4xl font-black text-indigo-400 outfit mb-6">14 DAYS</div>
+                    <button className="text-[10px] font-black text-white uppercase tracking-[0.2em] underline hover:text-indigo-300 transition-colors">
+                        View Invoices
+                    </button>
+                </div>
+            </div>
+
+            {/* Add-ons & Refills */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-white outfit uppercase italic mb-2">Orbital <span className="text-amber-500">Logistics</span></h2>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                            Refill your mission parameters. Neural credits and relay quotas are deployed instantly upon authorization.
+                        </p>
+                    </div>
                     <AddonSelector />
                 </div>
 
-                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="h-12 w-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-                            <Mail className="h-6 w-6 text-sky-400" />
+                <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center gap-6 group hover:bg-white/[0.04] transition-all">
+                    <div className="h-24 w-24 rounded-[2rem] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                        <Sparkles className="h-12 w-12" />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-xl font-black text-white outfit uppercase">Custom Deployment?</h3>
+                        <p className="text-slate-400 text-sm font-medium max-w-[280px]">
+                            Advanced enterprise requirements and custom relay volumes for planetary scale operations.
+                        </p>
+                    </div>
+                    <button className="px-8 py-4 bg-white text-slate-950 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-slate-100 transition-all shadow-xl shadow-white/10">
+                        Contact Command
+                    </button>
+                </div>
+            </div>
+
+            {/* Tactical Upgrades Section */}
+            <div className="relative pt-10">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-black text-white outfit uppercase italic mb-4">Tactical <span className="text-indigo-500">Upgrades</span></h2>
+                    <p className="text-slate-400 text-sm font-medium">Select a more powerful command protocol to unlock advanced AI capabilities.</p>
+                </div>
+                <PricingTable />
+            </div>
+
+            {/* Trust Badges */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-10">
+                {[
+                    { icon: ShieldCheck, title: "Secure Terminal", desc: "Enterprise-grade encryption for all financial relays." },
+                    { icon: Sparkles, title: "Instant Deployment", desc: "Upgraded protocols activate across your nodes immediately." },
+                    { icon: Zap, title: "Priority Node", desc: "Pro tiers get dedicated AI compute for zero latency." }
+                ].map((item, i) => (
+                    <div key={i} className="flex gap-4 items-start p-6 rounded-3xl bg-white/[0.02] border border-white/5">
+                        <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+                            <item.icon className="h-5 w-5 text-slate-400" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white outfit">Email Volume Boost</h3>
-                            <p className="text-slate-500 text-xs font-bold">Increase your monthly sending capacity.</p>
+                            <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-1">{item.title}</h4>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase leading-relaxed">{item.desc}</p>
                         </div>
                     </div>
-
-                    <div className="space-y-4">
-                        {[
-                            { vol: "5,000 Emails", price: "$25", desc: "One-time seasonal boost." },
-                            { vol: "25,000 Emails", price: "$99", desc: "For scaling your newsletter reach." },
-                            { vol: "100,000 Emails", price: "$299", desc: "Major platform-wide outreach expansion." },
-                        ].map(add => (
-                            <div key={add.vol} className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-sky-500/30 transition-all cursor-pointer">
-                                <div>
-                                    <div className="text-sm font-black text-white mb-1 tracking-tight">{add.vol}</div>
-                                    <p className="text-[10px] text-slate-500 font-bold">{add.desc}</p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-lg font-black text-white mb-2">{add.price}</div>
-                                    <button className="px-4 py-2 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all">
-                                        Purchase
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Invoices */}
-            <InvoiceHistory />
+                ))}
+            </div>
         </div>
-    );
+    )
 }

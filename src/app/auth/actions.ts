@@ -53,28 +53,28 @@ export async function registerUser(formData: any) {
  * Returns the workspaceId (always).
  */
 export async function ensureUserWorkspace(userId: string): Promise<string> {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { workspaceId: true, name: true, email: true } as any
-    }) as any
+    const users = await prisma.$queryRaw`SELECT "workspaceId", "name", "email" FROM "User" WHERE id = ${userId} LIMIT 1` as any[]
+    const user = users?.[0]
 
     if (user?.workspaceId) return user.workspaceId
 
     // Auto-create a workspace for this user
-    const workspace = await (prisma as any).workspace.create({
-        data: {
-            name: `${user?.name || user?.email?.split('@')[0] || 'My'} Workspace`,
-            ownerId: userId,
-        }
-    })
+    const workspaceId = `cl${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
+    const workspaceName = `${user?.name || user?.email?.split('@')[0] || 'My'} Workspace`
 
-    await (prisma as any).user.update({
-        where: { id: userId },
-        data: { workspaceId: workspace.id }
-    })
+    await prisma.$executeRaw`
+        INSERT INTO "Workspace" ("id", "name", "ownerId", "updatedAt")
+        VALUES (${workspaceId}, ${workspaceName}, ${userId}, NOW())
+    `
 
-    console.log(`[ensureUserWorkspace] Auto-created workspace ${workspace.id} for user ${userId}`)
-    return workspace.id
+    await prisma.$executeRaw`
+        UPDATE "User"
+        SET "workspaceId" = ${workspaceId}, "updatedAt" = NOW()
+        WHERE "id" = ${userId}
+    `
+
+    console.log(`[ensureUserWorkspace] Auto-created workspace ${workspaceId} for user ${userId}`)
+    return workspaceId
 }
 
 

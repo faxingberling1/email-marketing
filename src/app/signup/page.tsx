@@ -29,6 +29,7 @@ export default function SignupPage() {
     const [confirmPassword, setConfirmPassword] = useState("")
     const [name, setName] = useState("")
     const [company, setCompany] = useState("")
+    const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [errorMsg, setErrorMsg] = useState("")
     const router = useRouter()
 
@@ -53,6 +54,11 @@ export default function SignupPage() {
 
         if (password !== confirmPassword) {
             setErrorMsg("Authentication keys do not match.")
+            return
+        }
+
+        if (!agreedToTerms) {
+            setErrorMsg("Legal authorization required. Please accept Terms & Privacy.")
             return
         }
 
@@ -299,6 +305,27 @@ export default function SignupPage() {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="flex items-start gap-3 px-1">
+                                <div className="relative flex items-center mt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="terms"
+                                        checked={agreedToTerms}
+                                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                        className="peer h-4 w-4 bg-slate-900 border border-white/10 rounded focus:ring-0 focus:ring-offset-0 accent-indigo-500 transition-all cursor-pointer opacity-0 absolute"
+                                    />
+                                    <div className={`h-4 w-4 border border-white/10 rounded flex items-center justify-center transition-all ${agreedToTerms ? 'bg-indigo-500 border-indigo-500' : 'bg-slate-900'}`}>
+                                        {agreedToTerms && <Check className="h-3 w-3 text-white" />}
+                                    </div>
+                                </div>
+                                <label htmlFor="terms" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed cursor-pointer select-none">
+                                    I authorize MailMind to initialize my workstation. I agree to the
+                                    <Link href="/terms" className="text-indigo-400 hover:text-white mx-1">Terms of Service</Link>
+                                    and
+                                    <Link href="/privacy" className="text-indigo-400 hover:text-white ml-1">Privacy Protocol</Link>.
+                                </label>
                             </div>
 
                             {errorMsg && (

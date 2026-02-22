@@ -22,7 +22,7 @@ export async function seedDemoAccounts() {
             },
             create: {
                 id: `ws_demo_${tier}`,
-                name: `${tier.toUpperCase()} MISSION CONTROL`,
+                name: `${tier.toUpperCase()} COMMAND HUB`,
                 subscription_plan: tier,
                 subscription_status: 'active',
                 ai_credits_remaining: tier === 'starter' ? 300 : tier === 'growth' ? 2000 : tier === 'enterprise' ? 100000 : 6000,

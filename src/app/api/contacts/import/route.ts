@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-// @ts-ignore
 import Papa from 'papaparse';
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
 
+// Email validation regex (RFC 5322 compliant-ish)
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 export async function POST(req: Request) {
     try {
-        // Authenticate via session
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -21,7 +22,11 @@ export async function POST(req: Request) {
         }
 
         const csvText = await file.text();
-        const { data } = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        const { data } = Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: 'greedy',
+            transform: (value) => value.trim()
+        });
 
         // 1. Resolve Workspace & Tier
         const user = await (prisma as any).user.findUnique({
@@ -38,7 +43,6 @@ export async function POST(req: Request) {
             || user?.workspaceMemberships?.[0]?.workspace;
 
         if (!ws) {
-            // Fallback for users without a proper workspace assigned yet
             ws = { subscription_plan: 'free' };
         }
 
@@ -57,66 +61,90 @@ export async function POST(req: Request) {
 
         const remainingSpace = limits.contacts - currentCount;
 
-        // 3. Parse and trim contacts from CSV
-        let contacts = (data as any[]).map((row: any) => ({
-            email: (row.email || '').trim(),
-            name: (row.name || row.fullname || '').trim(),
-            phone: (row.phone || '').trim() || null,
-            businessName: (row.businessName || row.business_name || row.company || '').trim() || null,
-            tags: row.tags
-                ? row.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-                : [],
-        })).filter((c: any) => c.email && c.email.includes('@'));
+        // 3. Batch Validation & Sanitization
+        let contacts = (data as any[]).map((row: any) => {
+            const email = (row.email || '').toLowerCase();
+            const isValid = EMAIL_REGEX.test(email);
+
+            if (!isValid) return null;
+
+            return {
+                id: `c${Math.random().toString(36).substring(2, 15)}`,
+                userId,
+                email,
+                name: row.name || row.fullname || null,
+                phone: row.phone || null,
+                businessName: row.businessName || row.business_name || row.company || null,
+                tags: row.tags
+                    ? row.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+                    : [],
+            };
+        }).filter(Boolean) as any[];
 
         if (contacts.length === 0) {
-            return NextResponse.json({ error: 'No valid contacts found. Make sure your CSV has an "email" column.' }, { status: 400 });
+            return NextResponse.json({ error: 'No valid contacts found. Ensure your CSV has an "email" column with valid addresses.' }, { status: 400 });
         }
 
-        // Trim to remaining space if needed
+        // Tier capping
         const totalIncoming = contacts.length;
         if (contacts.length > remainingSpace) {
             contacts = contacts.slice(0, remainingSpace);
         }
 
-        // 4. Insert each contact using raw SQL (same pattern as createContact action)
+        // 4. High-Performance Bulk Insert (Batch size of 500)
         let inserted = 0;
-        let skipped = 0;
+        const BATCH_SIZE = 500;
 
-        for (const c of contacts) {
-            try {
-                const id = `c${Math.random().toString(36).substring(2, 15)}`;
-                const pgTags = `{${c.tags.join(',')}}`;
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO "Contact" (id, "userId", email, name, phone, "businessName", tags, "updatedAt", "createdAt")
-                     VALUES ($1, $2, $3, $4, $5, $6, $7::text[], NOW(), NOW())
-                     ON CONFLICT (email, "userId") DO NOTHING`,
-                    id, userId, c.email, c.name, c.phone, c.businessName, pgTags
+        for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
+            const batch = contacts.slice(i, i + BATCH_SIZE);
+
+            // Build the values string for raw SQL
+            // format: ($1, $2, ...), ($8, $9, ...)
+            const values: any[] = [];
+            const placeholders = batch.map((_, idx) => {
+                const offset = idx * 7;
+                values.push(
+                    batch[idx].id,
+                    batch[idx].userId,
+                    batch[idx].email,
+                    batch[idx].name,
+                    batch[idx].phone,
+                    batch[idx].businessName,
+                    batch[idx].tags
                 );
-                inserted++;
-            } catch (rowErr: any) {
-                // Skip duplicates or invalid rows silently
-                skipped++;
-            }
+                return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}::text[])`;
+            }).join(', ');
+
+            const query = `
+                INSERT INTO "Contact" (id, "userId", email, name, phone, "businessName", tags, "updatedAt", "createdAt")
+                VALUES ${placeholders}
+                ON CONFLICT (email, "userId") DO NOTHING
+            `;
+
+            const result = await prisma.$executeRawUnsafe(query, ...values);
+            inserted += Number(result);
         }
+
+        const skipped = totalIncoming - inserted;
 
         // 5. Clear contacts cache
         try {
             const { clearUserCache } = await import('@/lib/cache');
             clearUserCache(`contacts_intel_${userId}`);
         } catch {
-            // Cache clear is non-fatal
+            // Non-fatal
         }
 
         return NextResponse.json({
             success: true,
             inserted,
-            skipped,
+            skipped: Math.max(0, skipped),
             totalIncoming,
             cappedAt: totalIncoming > remainingSpace ? remainingSpace : null,
-            message: `${inserted} contact${inserted !== 1 ? 's' : ''} imported successfully.${skipped > 0 ? ` ${skipped} skipped (duplicates or invalid).` : ''}`,
+            message: `${inserted} contact${inserted !== 1 ? 's' : ''} imported successfully.${skipped > 0 ? ` ${skipped} were skipped (duplicates, invalid, or limit reached).` : ''}`,
         });
     } catch (error) {
         console.error('CSV Import Error:', error);
-        return NextResponse.json({ error: 'Failed to import contacts. Please check your file format.' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error during ingestion process.' }, { status: 500 });
     }
 }

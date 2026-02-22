@@ -12,10 +12,8 @@ export async function getSidebarData() {
     const userId = session.user.id;
 
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { workspaceId: true, global_role: true } as any
-        }) as any;
+        const users = await prisma.$queryRaw`SELECT "workspaceId", "global_role" FROM "User" WHERE id = ${userId} LIMIT 1` as any[]
+        const user = users?.[0]
 
         if (!user) return null;
 
@@ -25,15 +23,14 @@ export async function getSidebarData() {
         const quotas = await getWorkspaceQuotas(workspaceId);
 
         // Fetch dynamic counts for badges
-        const [contactCount, campaignCount, recentLogs] = await Promise.all([
-            prisma.contact.count({ where: { user: { workspaceId } } }),
-            prisma.campaign.count({ where: { userId } }),
-            (prisma as any).auditLog.findMany({
-                where: { target_id: user.workspaceId },
-                orderBy: { created_at: "desc" },
-                take: 5
-            })
+        const [contactCountRaw, campaignCountRaw, recentLogs] = await Promise.all([
+            prisma.$queryRaw`SELECT COUNT(*)::int as count FROM "Contact" WHERE "userId" IN (SELECT id FROM "User" WHERE "workspaceId" = ${workspaceId})` as Promise<any[]>,
+            prisma.$queryRaw`SELECT COUNT(*)::int as count FROM "Campaign" WHERE "userId" = ${userId}` as Promise<any[]>,
+            prisma.$queryRaw`SELECT * FROM "AuditLog" WHERE "target_id" = ${user.workspaceId} ORDER BY "created_at" DESC LIMIT 5` as Promise<any[]>
         ]);
+
+        const contactCount = contactCountRaw?.[0]?.count || 0;
+        const campaignCount = campaignCountRaw?.[0]?.count || 0;
 
         return {
             quotas,
@@ -63,19 +60,17 @@ export async function getPlanModalData() {
 
     const userId = session.user.id;
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                workspaceId: true,
-                subscriptionPlan: true,
-            } as any
-        }) as any;
+        const users = await prisma.$queryRaw`SELECT "workspaceId", "subscriptionPlan" FROM "User" WHERE id = ${userId} LIMIT 1` as any[]
+        const user = users?.[0]
 
         // Count contacts directly by userId — most reliable regardless of workspace setup
-        const [contactCount, campaignCount] = await Promise.all([
-            prisma.contact.count({ where: { userId } }),
-            prisma.campaign.count({ where: { userId } }),
+        const [contactCountRaw, campaignCountRaw] = await Promise.all([
+            prisma.$queryRaw`SELECT COUNT(*)::int as count FROM "Contact" WHERE "userId" = ${userId}` as Promise<any[]>,
+            prisma.$queryRaw`SELECT COUNT(*)::int as count FROM "Campaign" WHERE "userId" = ${userId}` as Promise<any[]>,
         ]);
+
+        const contactCount = contactCountRaw?.[0]?.count || 0;
+        const campaignCount = campaignCountRaw?.[0]?.count || 0;
 
         // If no workspace, still return useful data based on subscription plan
         if (!user?.workspaceId) {

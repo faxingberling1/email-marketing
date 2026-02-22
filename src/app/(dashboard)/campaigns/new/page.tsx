@@ -85,7 +85,7 @@ export default function NewCampaignPage() {
                     prompt: formData.prompt,
                     industry: "SaaS",
                     audience: formData.segment,
-                    offer: "AEM.AI Platform",
+                    offer: "MailMind Platform",
                     tone: formData.tone,
                     language: formData.language,
                     cta: formData.cta
