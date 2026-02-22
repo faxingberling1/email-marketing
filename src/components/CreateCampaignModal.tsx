@@ -53,12 +53,14 @@ export function CreateCampaignModal({ isOpen, onClose, segments, plan, quotas }:
 
     const handleFinalize = async () => {
         setIsLoading(true)
+        const selectedSegment = segments.find(s => s.id === data.audienceId)
         const result = await createCampaign({
-            ...data.identity,
-            type: data.type,
-            templateId: data.templateId,
-            audienceId: data.audienceId,
-            config: { ...data.optimization, ...data.launch }
+            name: data.identity.name || "Untitled Campaign",
+            subject: "Generative Subject (DRAFT)",
+            content: "Generative Content (DRAFT)",
+            segment: data.audienceId || "seg-all",
+            segmentCount: selectedSegment?.count || 1000,
+            status: "DRAFT"
         })
         setIsLoading(false)
         if (result.success) onClose()

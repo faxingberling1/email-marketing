@@ -129,6 +129,8 @@ export default function CampaignsPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 segments={data?.segments || []}
+                plan={data?.plan || 'free'}
+                quotas={data?.quotas || { ai: { remaining: 0 }, emails: { remaining: 0 } }}
             />
         </div>
     )

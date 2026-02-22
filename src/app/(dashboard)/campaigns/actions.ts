@@ -30,12 +30,11 @@ export async function deleteCampaign(campaignId: string) {
 
 export async function createCampaign(data: {
     name: string;
-    description?: string;
-    senderEmail?: string;
-    type: string;
-    templateId: string;
-    audienceId: string;
-    config: any;
+    subject: string;
+    content: string;
+    segment: string;
+    segmentCount: number;
+    status: string;
 }) {
     try {
         const session = await auth();
@@ -72,9 +71,8 @@ export async function createCampaign(data: {
             };
         }
 
-        // 3. Check Email Volume Limit (Mocking segment count for now)
-        const segmentCount = 1000;
-        const usage = await checkEmailLimit(workspaceId, segmentCount);
+        // 3. Check Email Volume Limit
+        const usage = await checkEmailLimit(workspaceId, data.segmentCount);
         if (!usage.allowed) {
             return {
                 success: false,
@@ -88,13 +86,13 @@ export async function createCampaign(data: {
                 data: {
                     userId,
                     name: data.name,
-                    subject: "DRAFT SUBJECT",
-                    aiContent: "DRAFT CONTENT",
-                    status: "DRAFT",
+                    subject: data.subject,
+                    aiContent: data.content,
+                    status: data.status.toUpperCase(),
                 }
             });
 
-            await consumeEmailCredits(workspaceId, segmentCount);
+            await consumeEmailCredits(workspaceId, data.segmentCount);
 
             return newCampaign;
         });
@@ -111,7 +109,31 @@ export async function getCampaignsData() {
     try {
         const session = await auth();
         const userId = session?.user?.id;
-        if (!userId) return { campaigns: [], segments: [] };
+        if (!userId) return { campaigns: [], segments: [], plan: 'free', quotas: { ai: { remaining: 0 }, emails: { remaining: 0 } } };
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { workspaceId: true }
+        });
+        if (!user?.workspaceId) return { campaigns: [], segments: [], plan: 'free', quotas: { ai: { remaining: 0 }, emails: { remaining: 0 } } };
+
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: user.workspaceId }
+        });
+
+        if (!workspace) return { campaigns: [], segments: [], plan: 'free', quotas: { ai: { remaining: 0 }, emails: { remaining: 0 } } };
+
+        const limits = getTierLimits(workspace.subscription_plan);
+        const plan = workspace.subscription_plan.toLowerCase() as any;
+
+        const quotas = {
+            ai: {
+                remaining: Math.max(0, limits.ai_credits_per_month - (workspace as any).total_ai_used)
+            },
+            emails: {
+                remaining: Math.max(0, limits.emails_per_month - (workspace as any).total_emails_sent)
+            }
+        };
 
         // Fetch all campaigns for this user with their email stats
         const campaigns = await prisma.campaign.findMany({
@@ -161,7 +183,7 @@ export async function getCampaignsData() {
             { id: 'seg-active', name: 'Active Subscribers', count: Math.floor(contactCount * 0.7), recommended: false },
         ];
 
-        return { campaigns: formattedCampaigns, segments };
+        return { campaigns: formattedCampaigns, segments, plan, quotas };
     } catch (error) {
         console.error("Failed to fetch campaigns data:", error);
         return { campaigns: [], segments: [] };
