@@ -4,6 +4,7 @@ export const authConfig = {
     providers: [], // Configured in auth.ts
     pages: {
         signIn: "/login",
+        error: "/login", // Redirect to login page on auth errors instead of native 500 page
     },
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
