@@ -272,8 +272,8 @@ async function getPredictiveAnalytics(contextMetrics: string, userId: string) {
         setCachedData(cacheKey, data);
         return data;
 
-    } catch (error) {
-        console.error("Gemini AI Predictive Analytics Error:", error);
+    } catch (error: any) {
+        console.warn(`Gemini AI Predictive Analytics Error: ${error.message || 'Rate limit or connection issue'}. Using fallback data.`);
         return {
             growthForecast: "+12.4%",
             activityHorizon: ["Optimizing delivery nodes...", "Surveilling engagement pulses...", "Neural link on standby"],
@@ -319,8 +319,8 @@ async function getPeakEngagement(contextMetrics: string, userId: string) {
         const data = JSON.parse(cleanedJSON);
         setCachedData(cacheKey, data);
         return data;
-    } catch (error) {
-        console.error("Gemini AI Peak Engagement Error:", error);
+    } catch (error: any) {
+        console.warn(`Gemini AI Peak Engagement Error: ${error.message || 'Rate limit or connection issue'}. Using fallback data.`);
         return {
             time: "Tuesday, 10:00 AM EST",
             segment: "Founders Segment",

@@ -52,7 +52,7 @@ export function Header() {
     }
 
     return (
-        <header className="sticky top-0 z-40 flex h-20 w-full items-center justify-between border-b border-white/5 bg-slate-950/50 px-8 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 flex h-20 w-full items-center justify-between border-b border-white/[0.03] bg-slate-950/40 px-8 backdrop-blur-2xl">
             {/* Logo & Status Section */}
             <div className="flex items-center gap-6 flex-1">
                 <div className="flex items-center gap-2 lg:hidden">
@@ -69,15 +69,25 @@ export function Header() {
 
                 <div className="hidden lg:flex items-center gap-6 text-[10px] font-mono">
                     {/* AI Engine Status */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                            <div className="relative h-2 w-2">
-                                <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-25" />
-                                <div className="relative h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                    <div className="flex items-center gap-4 group/ai cursor-default">
+                        <div className="flex items-center gap-3">
+                            <div className="relative h-2.5 w-2.5">
+                                <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20" />
+                                <div className="absolute -inset-1 rounded-full bg-emerald-500 animate-pulse opacity-10" />
+                                <div className="relative h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-bold uppercase tracking-widest text-emerald-400">System Online</span>
-                                <span className="text-[8px] text-slate-500 uppercase tracking-tighter">AI: Primed for Optimization</span>
+                                <span className="font-black uppercase tracking-[0.2em] text-emerald-400 text-[9px] translate-y-0.5">Neural Hub Online</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="h-[2px] w-12 bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: "85%" }}
+                                            className="h-full bg-emerald-500/50"
+                                        />
+                                    </div>
+                                    <span className="text-[7px] text-slate-500 uppercase tracking-tighter">Latency: 12ms</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,9 +96,9 @@ export function Header() {
 
                     {/* Architecture Status */}
                     <div className="group relative cursor-help">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/5 border border-indigo-500/20 hover:border-indigo-500/40 transition-colors">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-indigo-500/30 hover:bg-white/[0.05] transition-all">
                             <Zap className="h-3 w-3 text-indigo-400" />
-                            <span className="font-black text-white">85% <span className="text-slate-500 text-[8px] tracking-tighter ml-1">CORES ACTIVE</span></span>
+                            <span className="font-black text-white uppercase tracking-wider text-[9px]">Node <span className="text-indigo-400">8500-X</span></span>
                         </div>
 
                         {/* Tooltip */}
@@ -114,20 +124,24 @@ export function Header() {
                 </div>
 
                 <div className={cn(
-                    "relative transition-all duration-300 ease-out ml-6",
-                    isSearchFocused ? "w-80" : "w-48"
+                    "relative transition-all duration-500 ease-out ml-6 group/search",
+                    isSearchFocused ? "w-96" : "w-56"
                 )}>
                     <Search className={cn(
-                        "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors",
-                        isSearchFocused ? "text-indigo-400" : "text-slate-500"
+                        "absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-all duration-300",
+                        isSearchFocused ? "text-indigo-400 scale-110" : "text-slate-500"
                     )} />
                     <input
                         type="text"
-                        placeholder="Search intel..."
+                        placeholder="Scan sequences..."
                         onFocus={() => setIsSearchFocused(true)}
                         onBlur={() => setIsSearchFocused(false)}
-                        className="h-10 w-full rounded-xl border border-white/5 bg-white/5 pl-10 pr-4 text-[11px] text-white placeholder-slate-500 transition-all focus:bg-white/10 focus:border-indigo-500/50 focus:outline-none"
+                        className="h-10 w-full rounded-2xl border border-white/[0.05] bg-white/[0.02] pl-11 pr-12 text-[11px] text-white placeholder-slate-600 transition-all focus:bg-white/[0.05] focus:border-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/5"
                     />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-40 group-focus-within/search:opacity-100 transition-opacity">
+                        <kbd className="h-5 px-1.5 flex items-center justify-center rounded bg-white/5 border border-white/10 text-[8px] font-black text-slate-400">⌘</kbd>
+                        <kbd className="h-5 px-1.5 flex items-center justify-center rounded bg-white/5 border border-white/10 text-[8px] font-black text-slate-400">K</kbd>
+                    </div>
                 </div>
             </div>
 
@@ -187,28 +201,32 @@ export function Header() {
                 </div>
 
                 {/* Profile Menu */}
-                <div className="relative border-l border-white/10 pl-4">
+                <div className="relative border-l border-white/5 pl-6">
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center gap-3 rounded-xl p-1 pr-3 transition-all hover:bg-white/5 group"
+                        className="flex items-center gap-4 rounded-2xl p-1.5 pr-4 transition-all hover:bg-white/[0.03] group relative overflow-hidden"
                     >
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-lg shadow-indigo-500/20">
-                            <div className="flex h-full w-full items-center justify-center rounded-lg bg-slate-950 text-xs font-black text-white group-hover:bg-transparent transition-colors">
+                        <div className="h-10 w-10 rounded-xl bg-slate-800 p-[1px] relative">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-emerald-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="relative h-full w-full items-center justify-center rounded-xl bg-slate-950 text-[11px] font-black text-white flex">
                                 {userInitial}
                             </div>
                         </div>
                         <div className="hidden lg:flex flex-col items-start text-left">
-                            <span className="text-xs font-bold text-white leading-none mb-0.5 max-w-[100px] truncate">{userName}</span>
-                            <span className={cn(
-                                "text-[10px] font-black uppercase tracking-widest",
-                                planInfo.color
-                            )}>
-                                {planInfo.name}
-                            </span>
+                            <span className="text-[11px] font-black text-white uppercase tracking-wider mb-0.5 max-w-[120px] truncate">{userName}</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="h-1 w-1 rounded-full bg-indigo-500 shadow-[0_0_4px_rgba(99,102,241,0.8)]" />
+                                <span className={cn(
+                                    "text-[8px] font-black uppercase tracking-[0.2em]",
+                                    planInfo.color
+                                )}>
+                                    {planInfo.name} Protocol
+                                </span>
+                            </div>
                         </div>
                         <ChevronDown className={cn(
-                            "h-4 w-4 text-slate-500 transition-transform duration-200",
-                            isProfileOpen ? "rotate-180" : ""
+                            "h-3.5 w-3.5 text-slate-500 transition-transform duration-300",
+                            isProfileOpen ? "rotate-180 text-white" : "group-hover:text-slate-300"
                         )} />
                     </button>
 
@@ -220,49 +238,59 @@ export function Header() {
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-white/10 bg-slate-900/90 p-2 shadow-2xl backdrop-blur-xl z-20"
+                                    className="absolute right-0 mt-3 w-64 origin-top-right rounded-[2rem] border border-white/[0.03] bg-slate-900/90 p-3 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl z-20 overflow-hidden"
                                 >
-                                    <div className="px-3 py-2 border-b border-white/5 mb-2">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Signed in as</p>
-                                        <p className="text-xs font-semibold text-white truncate">{userEmail}</p>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+
+                                    <div className="px-4 py-3 border-b border-white/[0.03] mb-3 relative">
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Authenticated Entity</p>
+                                        <p className="text-[11px] font-black text-white truncate outfit">{userEmail}</p>
                                     </div>
 
-                                    <div className="space-y-1">
+                                    <div className="space-y-1.5 relative">
                                         <Link
                                             href="/settings"
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
+                                            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:bg-white/[0.03] hover:text-white group/item"
                                             onClick={() => setIsProfileOpen(false)}
                                         >
-                                            <Settings className="h-4 w-4" />
-                                            Account Settings
+                                            <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center group-hover/item:bg-indigo-500/20 group-hover/item:text-indigo-400 transition-colors">
+                                                <Settings className="h-4 w-4" />
+                                            </div>
+                                            Command Settings
                                         </Link>
                                         {dynamicData?.role === "super_admin" && (
                                             <Link
                                                 href="/admin"
-                                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 transition-all hover:bg-rose-500/20"
+                                                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/5 border border-rose-500/10 transition-all hover:bg-rose-500/10"
                                                 onClick={() => setIsProfileOpen(false)}
                                             >
-                                                <Shield className="h-4 w-4" />
-                                                Admin Dashboard
+                                                <div className="h-8 w-8 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                                                    <Shield className="h-4 w-4" />
+                                                </div>
+                                                Access HQ Control
                                             </Link>
                                         )}
                                         <Link
                                             href="/billing"
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-white/5 hover:text-white"
+                                            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:bg-white/[0.03] hover:text-white group/item"
                                             onClick={() => setIsProfileOpen(false)}
                                         >
-                                            <CreditCard className="h-4 w-4" />
-                                            <span>{planInfo.name} Plan</span>
+                                            <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center group-hover/item:bg-emerald-500/20 group-hover/item:text-emerald-400 transition-colors">
+                                                <CreditCard className="h-4 w-4" />
+                                            </div>
+                                            <span>{planInfo.name} Tier</span>
                                         </Link>
                                     </div>
 
-                                    <div className="mt-2 pt-2 border-t border-white/5">
+                                    <div className="mt-3 pt-3 border-t border-white/[0.03] relative">
                                         <button
                                             onClick={() => signOut()}
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-rose-400 transition-all hover:bg-rose-500/10 hover:text-rose-500"
+                                            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-rose-500/5 hover:text-rose-400 group/logout"
                                         >
-                                            <LogOut className="h-4 w-4" />
-                                            Log Out
+                                            <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center group-hover/logout:bg-rose-500/20 transition-colors">
+                                                <LogOut className="h-4 w-4" />
+                                            </div>
+                                            Terminate Session
                                         </button>
                                     </div>
                                 </motion.div>

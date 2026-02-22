@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { deleteCampaign } from "@/app/(dashboard)/campaigns/actions"
+
 import {
     Search,
     Filter,
@@ -33,12 +35,29 @@ interface Campaign {
 
 interface CampaignTableProps {
     campaigns: Campaign[]
+    onRefresh?: () => void
 }
 
-export function CampaignTable({ campaigns = [] }: CampaignTableProps) {
+export function CampaignTable({ campaigns: initialCampaigns = [], onRefresh }: CampaignTableProps) {
+    const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns)
+
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const [sortConfig, setSortConfig] = useState<{ key: keyof Campaign; direction: 'asc' | 'desc' } | null>(null)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Delete this campaign? This cannot be undone.")) return
+        setDeletingId(id)
+        const result = await deleteCampaign(id)
+        if (result.success) {
+            setCampaigns(prev => prev.filter(c => c.id !== id))
+            onRefresh?.()
+        } else {
+            alert(result.error || "Failed to delete campaign")
+        }
+        setDeletingId(null)
+    }
 
     // Filter and Sort Logic
     const filteredAndSortedCampaigns = useMemo(() => {
@@ -265,7 +284,11 @@ export function CampaignTable({ campaigns = [] }: CampaignTableProps) {
                                             <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all border border-white/5 hover:border-indigo-500/30">
                                                 <Edit2 className="h-4 w-4" />
                                             </button>
-                                            <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all border border-white/5 hover:border-rose-500/30">
+                                            <button
+                                                onClick={() => handleDelete(campaign.id)}
+                                                disabled={deletingId === campaign.id}
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all border border-white/5 hover:border-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
                                         </div>

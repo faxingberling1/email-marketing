@@ -2,40 +2,39 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-    User,
-    Mail,
-    Shield,
-    Camera,
-    Check,
-    Loader2,
-    Zap,
-    Target
-} from "lucide-react"
+import { User, Mail, Shield, Camera, Check, Loader2, Zap, Calendar, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { updateProfile } from "@/app/(dashboard)/settings/actions"
 
 interface ProfileSettingsProps {
     data: {
         name: string
         email: string
-        role: string
         avatar: string | null
+        memberSince?: string
     }
 }
 
 export function ProfileSettings({ data }: ProfileSettingsProps) {
     const [isSaving, setIsSaving] = useState(false)
     const [saved, setSaved] = useState(false)
-    const [profile, setProfile] = useState(data)
+    const [error, setError] = useState<string | null>(null)
+    const [profile, setProfile] = useState({ name: data.name, email: data.email })
 
     const handleSave = async () => {
         setIsSaving(true)
-        // Simulated network delay for orbital sync
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        setError(null)
+        const result = await updateProfile({ name: profile.name, email: profile.email })
         setIsSaving(false)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
+        if (result.success) {
+            setSaved(true)
+            setTimeout(() => setSaved(false), 3000)
+        } else {
+            setError(result.error || "Failed to save")
+        }
     }
+
+    const isDirty = profile.name !== data.name || profile.email !== data.email
 
     return (
         <div className="space-y-8">
@@ -51,13 +50,17 @@ export function ProfileSettings({ data }: ProfileSettingsProps) {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Avatar Section */}
-                <div className="lg:col-span-1 flex flex-col items-center">
+                <div className="lg:col-span-1 flex flex-col items-center gap-4">
                     <div className="relative group">
                         <div className="h-40 w-40 rounded-[2.5rem] border-2 border-dashed border-white/10 p-2 flex items-center justify-center bg-slate-900/40 hover:border-indigo-500/40 transition-all overflow-hidden">
-                            {profile.avatar ? (
-                                <img src={profile.avatar} alt="Avatar" className="h-full w-full object-cover rounded-[2rem]" />
+                            {data.avatar ? (
+                                <img src={data.avatar} alt="Avatar" className="h-full w-full object-cover rounded-[2rem]" />
                             ) : (
-                                <User className="h-16 w-16 text-slate-700" />
+                                <div className="h-full w-full rounded-[2rem] bg-gradient-to-br from-indigo-900/60 to-slate-900 flex items-center justify-center">
+                                    <span className="text-4xl font-black text-indigo-300 select-none">
+                                        {(data.name || data.email || "?")[0].toUpperCase()}
+                                    </span>
+                                </div>
                             )}
                             <div className="absolute inset-2 bg-indigo-900/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center rounded-[2rem] cursor-pointer">
                                 <Camera className="h-8 w-8 text-white" />
@@ -67,9 +70,14 @@ export function ProfileSettings({ data }: ProfileSettingsProps) {
                             <Zap className="h-4 w-4" />
                         </div>
                     </div>
-                    <p className="mt-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-center max-w-[140px]">
-                        Tactical Avatar Sync: <span className="text-indigo-400 italic">Online</span>
-                    </p>
+
+                    {/* Member since */}
+                    {data.memberSince && (
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                            <Calendar className="h-3 w-3" />
+                            Member since {data.memberSince}
+                        </div>
+                    )}
                 </div>
 
                 {/* Fields Section */}
@@ -77,31 +85,29 @@ export function ProfileSettings({ data }: ProfileSettingsProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <User className="h-3 w-3" /> Full Identity
+                                <User className="h-3 w-3" /> Full Name
                             </label>
                             <input
                                 type="text"
                                 value={profile.name}
                                 onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                placeholder="Your name"
                                 className="w-full bg-slate-900/60 border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all font-mono tracking-wider"
                             />
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <Target className="h-3 w-3" /> Tactical Role
+                                <Shield className="h-3 w-3" /> Account ID
                             </label>
-                            <input
-                                type="text"
-                                value={profile.role}
-                                onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                                className="w-full bg-slate-900/60 border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all font-mono tracking-wider"
-                            />
+                            <div className="w-full bg-slate-900/20 border border-white/[0.03] rounded-2xl px-5 py-4 text-xs font-bold text-slate-600 font-mono tracking-wider cursor-not-allowed truncate">
+                                {data.email.split('@')[0]}
+                            </div>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <Mail className="h-3 w-3" /> Active Frequency (Email)
+                            <Mail className="h-3 w-3" /> Email Address
                         </label>
                         <input
                             type="email"
@@ -111,50 +117,42 @@ export function ProfileSettings({ data }: ProfileSettingsProps) {
                         />
                     </div>
 
-                    <div className="pt-4 flex items-center justify-end">
+                    {/* Error */}
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400"
+                        >
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {error}
+                        </motion.div>
+                    )}
+
+                    <div className="pt-2 flex items-center justify-end">
                         <button
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={isSaving || (!isDirty && !saved)}
                             className={cn(
                                 "flex items-center gap-3 px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all relative overflow-hidden",
                                 saved
                                     ? "bg-emerald-500 text-white shadow-xl shadow-emerald-500/20"
-                                    : "bg-indigo-500 hover:bg-indigo-400 text-white shadow-xl shadow-indigo-500/20 active:scale-95 disabled:opacity-50"
+                                    : isDirty
+                                        ? "bg-indigo-500 hover:bg-indigo-400 text-white shadow-xl shadow-indigo-500/20 active:scale-95"
+                                        : "bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed"
                             )}
                         >
                             <AnimatePresence mode="wait">
                                 {isSaving ? (
-                                    <motion.div
-                                        key="saving"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        SYNCING IDENTITY...
+                                    <motion.div key="saving" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
                                     </motion.div>
                                 ) : saved ? (
-                                    <motion.div
-                                        key="saved"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Check className="h-4 w-4" />
-                                        COMMITTED TO CORE
+                                    <motion.div key="saved" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                                        <Check className="h-4 w-4" /> Saved
                                     </motion.div>
                                 ) : (
-                                    <motion.div
-                                        key="normal"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Shield className="h-4 w-4" />
-                                        COMMIT CHANGES
+                                    <motion.div key="normal" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4" /> Save Changes
                                     </motion.div>
                                 )}
                             </AnimatePresence>

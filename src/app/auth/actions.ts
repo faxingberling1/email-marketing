@@ -47,6 +47,36 @@ export async function registerUser(formData: any) {
     return user
 }
 
+/**
+ * Ensures a user has an active workspace. If missing, auto-creates one.
+ * Call this at the start of any server action / page that requires a workspace.
+ * Returns the workspaceId (always).
+ */
+export async function ensureUserWorkspace(userId: string): Promise<string> {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { workspaceId: true, name: true, email: true } as any
+    }) as any
+
+    if (user?.workspaceId) return user.workspaceId
+
+    // Auto-create a workspace for this user
+    const workspace = await (prisma as any).workspace.create({
+        data: {
+            name: `${user?.name || user?.email?.split('@')[0] || 'My'} Workspace`,
+            ownerId: userId,
+        }
+    })
+
+    await (prisma as any).user.update({
+        where: { id: userId },
+        data: { workspaceId: workspace.id }
+    })
+
+    console.log(`[ensureUserWorkspace] Auto-created workspace ${workspace.id} for user ${userId}`)
+    return workspace.id
+}
+
 
 export async function completeOnboarding(formData: { goal: string }) {
     const session = await auth()

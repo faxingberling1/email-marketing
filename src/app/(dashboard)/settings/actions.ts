@@ -2,39 +2,83 @@
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
+import { ensureUserWorkspace } from "@/app/auth/actions"
+import { getWorkspaceQuotas } from "@/lib/services/usage-enforcement"
+import { TIER_CONFIG, SubscriptionTier } from "@/lib/tiers"
+import { revalidatePath } from "next/cache"
 
 export async function getSettingsData() {
     const session = await auth()
     if (!session?.user?.id) throw new Error("Unauthorized")
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id }
-    })
+    const userId = session.user.id
+    const workspaceId = await ensureUserWorkspace(userId)
+
+    const [user, userAiRaw, quotas, contactCount, campaignCount] = await Promise.all([
+        prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                subscriptionPlan: true,
+                createdAt: true,
+            }
+        }),
+        prisma.$queryRaw`SELECT "aiDefaultLanguage", "aiDefaultTone", "aiEngagementThreshold", "aiAutoOptimize" FROM "User" WHERE id = ${userId}` as Promise<any[]>,
+        getWorkspaceQuotas(workspaceId).catch(() => null),
+        prisma.contact.count({ where: { userId } }),
+        prisma.campaign.count({ where: { userId } }),
+    ])
 
     if (!user) throw new Error("User not found")
+    const aiRaw = userAiRaw?.[0] || {}
 
-    const planMapping: Record<string, string> = {
-        starter: "Starter Plan",
-        growth: "Growth Plan",
-        pro: "Pro Plan",
-        enterprise: "Enterprise Plan",
-        free: "Free Plan"
+    const plan = (user.subscriptionPlan || 'free').toLowerCase() as SubscriptionTier
+    const limits = TIER_CONFIG[plan] || TIER_CONFIG.free
+
+    const emailsUsed = quotas?.emails
+        ? quotas.emails.limit - quotas.emails.remaining
+        : 0
+    const emailUsagePct = quotas?.emails
+        ? Math.round((emailsUsed / quotas.emails.limit) * 100)
+        : 0
+
+    const aiUsed = quotas?.ai
+        ? quotas.ai.limit - quotas.ai.remaining
+        : 0
+    const aiUsagePct = quotas?.ai
+        ? Math.round((aiUsed / quotas.ai.limit) * 100)
+        : 0
+
+    const planLabels: Record<string, string> = {
+        free: "Free Plan", starter: "Starter Plan", growth: "Growth Plan",
+        pro: "Pro Plan", enterprise: "Enterprise Plan"
     }
-
-    const planName = planMapping[user.subscriptionPlan.toLowerCase()] || "Free Plan"
 
     return {
         profile: {
-            name: user.name || "User",
-            email: user.email,
-            role: "Marketing Director", // Placeholder or fetch if you have a role field
-            avatar: user.image
+            name: user.name || "",
+            email: user.email || "",
+            avatar: user.image || null,
+            memberSince: user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                : "Unknown",
         },
         subscription: {
-            plan: planName,
-            usage: 42, // Mock for now until we have usage tracking
-            nextBilling: "March 20, 2026",
-            limit: user.subscriptionPlan === "pro" ? "200,000 Emails" : "10,000 Emails"
+            planKey: plan,
+            plan: planLabels[plan] || "Free Plan",
+            emailLimit: limits.emails_per_month,
+            emailsUsed,
+            emailUsagePct,
+            aiCreditsLimit: limits.ai_credits_per_month,
+            aiCreditsUsed: aiUsed,
+            aiUsagePct,
+            contactsUsed: contactCount,
+            contactsLimit: limits.contacts,
+            campaignCount,
+            features: limits.features,
         },
         integrations: [
             { id: "i1", name: "HubSpot CRM", status: "Connected", lastSync: "12m ago" },
@@ -42,34 +86,66 @@ export async function getSettingsData() {
             { id: "i3", name: "Twilio SMS", status: "Pending", lastSync: "Never" },
         ],
         aiPreferences: {
-            defaultLanguage: "English",
-            defaultTone: "Professional",
-            engagementThreshold: 75,
-            autoOptimize: true
+            defaultLanguage: aiRaw.aiDefaultLanguage || "English",
+            defaultTone: aiRaw.aiDefaultTone || "Professional",
+            engagementThreshold: aiRaw.aiEngagementThreshold || 75,
+            autoOptimize: aiRaw.aiAutoOptimize ?? true,
         },
         domains: [
             { domain: "mg.antigravity.ai", status: "Verified", spf: true, dkim: true },
             { domain: "mail.tactical.io", status: "Attention Required", spf: true, dkim: false },
         ]
-    };
+    }
 }
 
-export async function updateAIThreshold(threshold: number) {
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    return { success: true, newThreshold: threshold };
+export async function updateProfile(data: { name: string; email: string }) {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+
+    const { name, email } = data
+    try {
+        await (prisma as any).user.update({
+            where: { id: session.user.id },
+            data: { name: name.trim() || null, email: email.trim() }
+        })
+        revalidatePath("/settings")
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: "Failed to save changes" }
+    }
 }
 
-export async function getDomainOptimization() {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+export async function updateAISettings(data: {
+    defaultLanguage?: string
+    defaultTone?: string
+    engagementThreshold?: number
+    autoOptimize?: boolean
+}) {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
 
-    return {
-        suggestedDomain: 'relay.antigravity.ai',
-        benefit: '+4.2% Deliverability potential',
-        risk: 'Minimal (Auto-warming enabled)'
-    };
+    try {
+        await (prisma as any).user.update({
+            where: { id: session.user.id },
+            data: {
+                ...(data.defaultLanguage && { aiDefaultLanguage: data.defaultLanguage }),
+                ...(data.defaultTone && { aiDefaultTone: data.defaultTone }),
+                ...(data.engagementThreshold !== undefined && { aiEngagementThreshold: data.engagementThreshold }),
+                ...(data.autoOptimize !== undefined && { aiAutoOptimize: data.autoOptimize }),
+            }
+        })
+        revalidatePath("/settings")
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: "Failed to save AI preferences" }
+    }
 }
 
 export async function syncIntegration(id: string) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return { success: true, timestamp: new Date().toISOString() };
+    const session = await auth()
+    if (!session?.user?.id) return { success: false }
+
+    // Mock a sync delay for realism
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    return { success: true, timestamp: new Date().toISOString() }
 }

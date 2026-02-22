@@ -21,6 +21,10 @@ model User {
   subscriptionPlan     String            @default("free")
   stripeCustomerId     String?           @unique
   workspaceId          String?
+  aiDefaultLanguage    String            @default("English")
+  aiDefaultTone        String            @default("Professional")
+  aiEngagementThreshold Int               @default(75)
+  aiAutoOptimize       Boolean           @default(true)
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   accounts             Account[]

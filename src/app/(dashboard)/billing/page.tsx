@@ -1,16 +1,21 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getTierLimits } from "@/lib/tiers";
-import { CreditCard, Zap, Mail, Users, CheckCircle2, AlertCircle, ArrowRight, Download, Sparkles } from "lucide-react";
+import { CreditCard, Zap, Mail, Users, CheckCircle2, ArrowRight, Download, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PlanSelector } from "@/components/billing/PlanSelector";
 import { AddonSelector } from "@/components/billing/AddonSelector";
 import { ManageSubscriptionButtons } from "@/components/billing/ManageSubscriptionButtons";
+import { InvoiceHistory } from "@/components/billing/InvoiceHistory";
+import { ensureUserWorkspace } from "@/app/auth/actions";
 
 export default async function BillingPage() {
     const session = await auth();
     if (!session?.user?.id) redirect("/login");
+
+    // Auto-create workspace if user doesn't have one (self-healing)
+    await ensureUserWorkspace(session.user.id);
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -18,13 +23,7 @@ export default async function BillingPage() {
     });
 
     if (!user?.workspace) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                <AlertCircle className="h-12 w-12 text-slate-500 mb-4" />
-                <h1 className="text-2xl font-black text-white outfit mb-2">No Workspace Found</h1>
-                <p className="text-slate-400 max-w-md">You need an active workspace to view billing information.</p>
-            </div>
-        );
+        redirect("/dashboard"); // Should never happen after ensureUserWorkspace
     }
 
     const ws = user.workspace as any;
@@ -202,52 +201,7 @@ export default async function BillingPage() {
             </section>
 
             {/* Invoices */}
-            <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Transactional History
-                    </h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase">
-                        Full invoice history and payment methods are managed via the Secure Stripe Portal.
-                    </p>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] border-b border-white/5">
-                                <th className="px-8 py-5">Reference</th>
-                                <th className="px-8 py-5">Issue Date</th>
-                                <th className="px-8 py-5">Valuation</th>
-                                <th className="px-8 py-5">Status</th>
-                                <th className="px-8 py-5 text-right">Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/[0.03]">
-                            {[
-                                { id: "MM-2024-8842", date: "Feb 1, 2024", amount: "$79.00", status: "Processed" },
-                                { id: "MM-2024-7129", date: "Jan 1, 2024", amount: "$79.00", status: "Processed" },
-                                { id: "MM-2023-6621", date: "Dec 1, 2023", amount: "$29.00", status: "Processed" },
-                            ].map((inv) => (
-                                <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
-                                    <td className="px-8 py-5 text-sm font-black text-white tracking-widest uppercase italic">{inv.id}</td>
-                                    <td className="px-8 py-5 text-sm font-bold text-slate-500">{inv.date}</td>
-                                    <td className="px-8 py-5 text-sm font-black text-white">{inv.amount}</td>
-                                    <td className="px-8 py-5">
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                                            {inv.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-5 text-right">
-                                        <button className="h-9 w-9 inline-flex items-center justify-center bg-white/5 text-slate-400 hover:text-white rounded-xl border border-white/5 transition-all">
-                                            <Download className="h-4 w-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <InvoiceHistory />
         </div>
     );
 }

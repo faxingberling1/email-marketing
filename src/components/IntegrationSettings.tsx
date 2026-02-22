@@ -14,6 +14,7 @@ import {
     AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { syncIntegration } from "@/app/(dashboard)/settings/actions"
 
 interface Integration {
     id: string
@@ -26,12 +27,19 @@ interface IntegrationSettingsProps {
     integrations: Integration[]
 }
 
-export function IntegrationSettings({ integrations }: IntegrationSettingsProps) {
+export function IntegrationSettings({ integrations: initialIntegrations }: IntegrationSettingsProps) {
+    const [integrations, setIntegrations] = useState(initialIntegrations)
     const [isSyncing, setIsSyncing] = useState<string | null>(null)
 
-    const handleSync = (id: string) => {
+    const handleSync = async (id: string) => {
         setIsSyncing(id)
-        setTimeout(() => setIsSyncing(null), 2000)
+        const result = await syncIntegration(id)
+        setIsSyncing(null)
+        if (result.success) {
+            setIntegrations(prev => prev.map(int =>
+                int.id === id ? { ...int, lastSync: "Just now" } : int
+            ))
+        }
     }
 
     const getStatusStyles = (status: string) => {
@@ -82,7 +90,7 @@ export function IntegrationSettings({ integrations }: IntegrationSettingsProps) 
                         </div>
 
                         <div className="space-y-2 mb-8">
-                            <h4 className="text-sm font-black text-white uppercase tracking-widest group-hover:text-purple-400 transition-colors uppercase">{integration.name}</h4>
+                            <h4 className="text-sm font-black text-white uppercase tracking-widest group-hover:text-purple-400 transition-colors">{integration.name}</h4>
                             <div className="flex items-center gap-2">
                                 <Clock className="h-3 w-3 text-slate-600" />
                                 <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Last Orbital Sync: {integration.lastSync}</span>
@@ -103,7 +111,6 @@ export function IntegrationSettings({ integrations }: IntegrationSettingsProps) 
                             </button>
                         </div>
 
-                        {/* Background Orbital Glow */}
                         <div className="absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-purple-500/5 blur-[50px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.div>
                 ))}
@@ -116,7 +123,7 @@ export function IntegrationSettings({ integrations }: IntegrationSettingsProps) 
                     </div>
                     <div>
                         <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-0.5">Tactical Integrity Sync</p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">All 3 active integration nodes are reporting 100% data fidelity.</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">All nodes reporting 100% data fidelity.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-emerald-400">

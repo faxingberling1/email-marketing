@@ -28,6 +28,7 @@ import { signOut } from "@/app/auth/actions"
 import { useSidebar } from "./SidebarContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
+import { PlanDetailsModal } from "./PlanDetailsModal"
 
 const adminNavigation = [
     { name: "Admin Home", href: "/admin", icon: Shield },
@@ -42,6 +43,7 @@ import { getSidebarData } from "@/app/(dashboard)/sidebar-actions"
 export function Sidebar() {
     const pathname = usePathname()
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
+    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
     const { data: session } = useSession()
     const [dynamicData, setDynamicData] = useState<any>(null)
 
@@ -243,9 +245,17 @@ export function Sidebar() {
                                 className={cn("h-full bg-gradient-to-r transition-all duration-1000", planInfo.color)}
                             />
                         </div>
-                        <Link href="/billing" className="mt-4 block text-center w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-[10px] font-black text-white transition-all hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20 uppercase tracking-[0.2em]">
-                            Refuel Credits
-                        </Link>
+                        <div className="mt-4 flex flex-col gap-2">
+                            <button
+                                onClick={() => setIsPlanModalOpen(true)}
+                                className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-[10px] font-black text-slate-300 transition-all hover:bg-white/10 hover:text-white uppercase tracking-[0.2em]"
+                            >
+                                View More Info
+                            </button>
+                            <Link href="/billing" className="block text-center w-full rounded-xl bg-indigo-600 px-3 py-2 text-[10px] font-black text-white transition-all hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20 uppercase tracking-[0.2em]">
+                                Refuel Credits
+                            </Link>
+                        </div>
                     </motion.div>
                 ) : (
                     <div className="flex flex-col items-center gap-2">
@@ -269,6 +279,11 @@ export function Sidebar() {
                     {!isCollapsed && <span>Log Out</span>}
                 </button>
             </div>
+            <PlanDetailsModal
+                isOpen={isPlanModalOpen}
+                onClose={() => setIsPlanModalOpen(false)}
+                currentPlan={currentPlan}
+            />
         </div>
     )
 

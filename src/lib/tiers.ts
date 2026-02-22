@@ -79,3 +79,11 @@ export const TIER_CONFIG: Record<SubscriptionTier, TierLimits> = {
 export function getTierLimits(tier: string): TierLimits {
     return TIER_CONFIG[tier as SubscriptionTier] || TIER_CONFIG.free;
 }
+
+export const TIER_META_MAP: Record<SubscriptionTier, { label: string; gradient: string; accent: string; accentBg: string }> = {
+    free: { label: "Free", gradient: "from-slate-600 to-slate-500", accent: "text-slate-400", accentBg: "bg-slate-500/10 border-slate-500/20" },
+    starter: { label: "Starter", gradient: "from-blue-600 to-cyan-500", accent: "text-blue-400", accentBg: "bg-blue-500/10 border-blue-500/20" },
+    growth: { label: "Growth", gradient: "from-emerald-600 to-teal-500", accent: "text-emerald-400", accentBg: "bg-emerald-500/10 border-emerald-500/20" },
+    pro: { label: "Pro", gradient: "from-indigo-600 to-violet-600", accent: "text-indigo-400", accentBg: "bg-indigo-500/10 border-indigo-500/20" },
+    enterprise: { label: "Enterprise", gradient: "from-rose-600 to-pink-600", accent: "text-rose-400", accentBg: "bg-rose-500/10 border-rose-500/20" },
+}

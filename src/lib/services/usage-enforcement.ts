@@ -63,8 +63,8 @@ export async function getWorkspaceQuotas(workspaceId: string): Promise<Workspace
                     where: { workspaceId },
                     select: { id: true }
                 })).map(u => u.id)
-            }, type: "AUTOMATION"
-        } as any
+            }
+        }
     });
 
     return {

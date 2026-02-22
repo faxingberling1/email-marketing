@@ -24,15 +24,23 @@ export async function POST(req: Request) {
         const { data } = Papa.parse(csvText, { header: true, skipEmptyLines: true });
 
         // 1. Resolve Workspace & Tier
-        const userRows = await prisma.$queryRaw<any[]>`
-            SELECT w.id as "workspaceId", w.subscription_plan
-            FROM "User" u
-            JOIN "Workspace" w ON u."workspaceId" = w.id
-            WHERE u.id = ${userId}
-            LIMIT 1
-        `;
-        const ws = userRows[0];
-        if (!ws) return NextResponse.json({ error: 'No active workspace' }, { status: 400 });
+        const user = await (prisma as any).user.findUnique({
+            where: { id: userId },
+            include: {
+                workspace: true,
+                ownedWorkspaces: { take: 1 },
+                workspaceMemberships: { include: { workspace: true }, take: 1 }
+            }
+        });
+
+        let ws: any = user?.workspace
+            || user?.ownedWorkspaces?.[0]
+            || user?.workspaceMemberships?.[0]?.workspace;
+
+        if (!ws) {
+            // Fallback for users without a proper workspace assigned yet
+            ws = { subscription_plan: 'free' };
+        }
 
         const { getTierLimits } = await import('@/lib/tiers');
         const limits = getTierLimits(ws.subscription_plan);
