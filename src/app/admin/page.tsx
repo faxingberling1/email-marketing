@@ -4,6 +4,7 @@ import {
     TrendingUp, Activity, BadgeDollarSign, FlaskConical, BanIcon, Gauge
 } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 import { getAIUsageAggregation } from "@/lib/services/ai/usage-aggregator"
 import { getBillingMetrics } from "@/lib/services/billing/mrr-calculator"
@@ -60,34 +61,72 @@ async function getPlatformHealth() {
 function MetricCard({ icon: Icon, label, value, subValue, sub, gradient, alert = false, dim = false }:
     { icon: any; label: string; value: string | number; subValue?: string; sub?: string; gradient: string; alert?: boolean; dim?: boolean }) {
     return (
-        <div className={`relative bg-slate-900/50 border rounded-2xl p-5 transition-all group hover:border-white/10
-            ${alert ? "border-rose-500/30 shadow-rose-900/20 shadow-lg" : dim ? "border-white/[0.03]" : "border-white/5"}`}>
-            {alert && <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-rose-500 animate-pulse" />}
-            <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 shadow-lg`}>
+        <div className={cn(
+            "relative border rounded-2xl p-5 transition-all duration-500 group overflow-hidden",
+            "bg-slate-900/40 backdrop-blur-xl hover:bg-slate-900/60 hover:scale-[1.02]",
+            alert
+                ? "border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:border-rose-500/50"
+                : dim
+                    ? "border-white/[0.03] opacity-60"
+                    : "border-white/5 hover:border-white/10"
+        )}>
+            {/* Atmospheric Detail */}
+            <div className={cn(
+                "absolute -top-12 -right-12 h-24 w-24 rounded-full blur-[40px] opacity-[0.05] transition-opacity duration-1000 group-hover:opacity-[0.15]",
+                `bg-gradient-to-br ${gradient}`
+            )} />
+
+            {alert && (
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    <span className="text-[8px] font-black text-rose-500 uppercase tracking-tighter">Critical Signal</span>
+                    <div className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                </div>
+            )}
+
+            <div className={cn(
+                "h-9 w-9 rounded-xl flex items-center justify-center mb-4 transition-all duration-500",
+                `bg-gradient-to-br ${gradient} shadow-lg shadow-black/40 group-hover:rotate-6`
+            )}>
                 <Icon className="h-4.5 w-4.5 text-white h-[18px] w-[18px]" />
             </div>
-            <div className="flex items-baseline gap-2 mb-0.5">
-                <div className={`text-2xl font-black outfit ${alert ? "text-rose-300" : dim ? "text-slate-500" : "text-white"}`}>
+
+            <div className="flex items-baseline gap-2 mb-0.5 relative z-10">
+                <div className={cn(
+                    "text-2xl font-black outfit leading-none",
+                    alert ? "text-rose-400" : dim ? "text-slate-500" : "text-white"
+                )}>
                     {value}
                 </div>
-                {subValue && <div className="text-sm font-bold text-slate-500">{subValue}</div>}
+                {subValue && <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">{subValue}</div>}
             </div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">{label}</div>
-            {sub && <div className="text-[11px] text-slate-700 font-bold">{sub}</div>}
+
+            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 mb-1 leading-none">{label}</div>
+            {sub && (
+                <div className="text-[8px] text-slate-700 font-black uppercase tracking-widest mt-1.5 border-t border-white/[0.03] pt-1.5">
+                    {sub}
+                </div>
+            )}
         </div>
     )
 }
 
 function RiskBadge({ level, label }: { level: "ok" | "warn" | "critical"; label: string }) {
     const styles = {
-        ok: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-        warn: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-        critical: "bg-rose-500/10 border-rose-500/20 text-rose-400",
+        ok: "bg-emerald-500/5 border-emerald-500/10 text-emerald-400/90",
+        warn: "bg-amber-500/5 border-amber-500/10 text-amber-400/90",
+        critical: "bg-rose-500/5 border-rose-500/10 text-rose-400/90",
     }
-    const dots = { ok: "bg-emerald-500", warn: "bg-amber-500", critical: "bg-rose-500 animate-pulse" }
+    const dots = {
+        ok: "bg-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]",
+        warn: "bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]",
+        critical: "bg-rose-500 animate-ping shadow-[0_0_12px_rgba(244,63,94,0.6)]"
+    }
     return (
-        <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${styles[level]}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${dots[level]}`} />
+        <span className={cn(
+            "inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] px-3.5 py-1.5 rounded-full border backdrop-blur-md transition-all",
+            styles[level]
+        )}>
+            <span className={cn("h-1.5 w-1.5 rounded-full", dots[level])} />
             {label}
         </span>
     )
@@ -96,12 +135,15 @@ function RiskBadge({ level, label }: { level: "ok" | "warn" | "critical"; label:
 function HealthBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
     const pct = total === 0 ? 0 : Math.max(2, (count / total) * 100)
     return (
-        <div className="flex items-center gap-4">
-            <div className="w-24 shrink-0 text-xs font-black text-slate-500 capitalize">{label}</div>
-            <div className="flex-1 h-2 bg-white/[0.04] rounded-full overflow-hidden">
-                <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+        <div className="flex items-center gap-4 group">
+            <div className="w-24 shrink-0 text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-400 transition-colors">{label}</div>
+            <div className="flex-1 h-3 bg-white/[0.03] rounded-lg overflow-hidden p-[2px] border border-white/[0.02]">
+                <div
+                    className={cn("h-full rounded-[4px] transition-all duration-1000 ease-out shadow-lg", color)}
+                    style={{ width: `${pct}%` }}
+                />
             </div>
-            <div className="w-8 text-right text-xs font-black text-slate-500">{count}</div>
+            <div className="w-8 text-right text-[10px] font-black text-slate-400 outfit tracking-wider">{count}</div>
         </div>
     )
 }
