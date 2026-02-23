@@ -23,19 +23,21 @@ interface MetricCardProps {
 }
 
 export function MetricCard({
-    name,
-    value,
-    change,
-    icon: Icon,
-    sparkline,
-    aiSuggestion,
-    status,
-    index,
+    name = "Metric",
+    value = "0",
+    change = "0%",
+    icon: Icon = AlertCircle,
+    sparkline = [0, 0, 0, 0, 0, 0, 0],
+    aiSuggestion = "Analyzing...",
+    status = "success",
+    index = 0,
     progressBar
 }: MetricCardProps) {
     const [isHovered, setIsHovered] = useState(false)
-    const isPositive = !change.startsWith('-')
-    const progressPerc = progressBar ? Math.min(100, (progressBar.current / progressBar.total) * 100) : 0
+    const isPositive = change ? !change.startsWith('-') : true
+    const progressPerc = progressBar && progressBar.total > 0
+        ? Math.min(100, (progressBar.current / progressBar.total) * 100)
+        : 0
 
     // Simple Sparkline Path Generator
     const getPath = (data: number[]) => {

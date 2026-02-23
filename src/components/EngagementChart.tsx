@@ -25,7 +25,14 @@ interface EngagementChartProps {
     }
 }
 
-export function EngagementChart({ data, peakEngagement }: EngagementChartProps) {
+export function EngagementChart({
+    data = [],
+    peakEngagement = {
+        time: "Calculating...",
+        segment: "All Segments",
+        reason: "Analysis in progress"
+    }
+}: EngagementChartProps) {
     const [filter, setFilter] = useState<'7D' | '30D' | 'ALL'>('7D')
     const [activeTab, setActiveTab] = useState<'engagement' | 'retention'>('engagement')
 

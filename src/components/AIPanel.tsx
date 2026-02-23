@@ -43,7 +43,9 @@ export function AIPanel({
     // Rotate status messages for "Activity Horizon"
     useEffect(() => {
         const interval = setInterval(() => {
-            setStatusIndex((prev) => (prev + 1) % activityHorizon.length)
+            if (activityHorizon.length > 0) {
+                setStatusIndex((prev) => (prev + 1) % activityHorizon.length)
+            }
         }, 4000)
         return () => clearInterval(interval)
     }, [activityHorizon.length])
