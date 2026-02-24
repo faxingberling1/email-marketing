@@ -67,6 +67,12 @@ export default function SignupPage() {
             return
         }
 
+        const strength = getPasswordStrength(password)
+        if (strength.score < 2) {
+            setErrorMsg("Strength insufficient. Please add symbols, numbers, or uppercase letters for encryption stability.")
+            return
+        }
+
         setLoading(true)
 
         try {

@@ -41,7 +41,15 @@ export async function getDashboardStats() {
                 orderBy: { updatedAt: 'desc' },
                 include: {
                     _count: {
-                        select: { emails: true }
+                        select: {
+                            emails: true,
+                        }
+                    },
+                    emails: {
+                        select: {
+                            opened: true,
+                            clicked: true,
+                        }
                     }
                 }
             }),
@@ -145,8 +153,10 @@ export async function getDashboardStats() {
             ],
             recentCampaigns: recentCampaigns.map((c: any) => {
                 const sentCount = c._count.emails;
-                const openRate = sentCount > 0 ? Math.floor(Math.random() * 25) + 20 : 0;
-                const clickRate = openRate > 0 ? Math.floor(Math.random() * 10) + 5 : 0;
+                const openedCount = c.emails.filter((e: any) => e.opened).length;
+                const clickedCount = c.emails.filter((e: any) => e.clicked).length;
+                const openRate = sentCount > 0 ? Math.round((openedCount / sentCount) * 100) : null;
+                const clickRate = sentCount > 0 ? Math.round((clickedCount / sentCount) * 100) : null;
 
                 return {
                     id: c.id,
@@ -154,9 +164,9 @@ export async function getDashboardStats() {
                     sentDate: c.createdAt.toLocaleDateString(),
                     status: c.status === 'PUBLISHED' ? 'Active' : c.status === 'DRAFT' ? 'Scheduled' : 'Paused',
                     sentCount: sentCount.toLocaleString(),
-                    openRate: `${openRate}%`,
-                    clickRate: `${clickRate}%`,
-                    retargetRecommended: openRate < 25 && sentCount > 0,
+                    openRate: openRate !== null ? `${openRate}%` : '—',
+                    clickRate: clickRate !== null ? `${clickRate}%` : '—',
+                    retargetRecommended: openRate !== null && openRate < 25 && sentCount > 0,
                     nextLaunchSuggestion: "AI recommends Tuesday at 10 AM for 15% higher open potential"
                 };
             }),

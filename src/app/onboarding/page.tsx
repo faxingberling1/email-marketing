@@ -35,12 +35,35 @@ export default function OnboardingPage() {
 
     const finishOnboarding = async () => {
         setLoading(true)
+        console.log("[DIAG] Starting finishOnboarding with goal:", goal)
         try {
-            await completeOnboarding({ goal })
-            router.push("/dashboard")
-            router.refresh()
-        } catch (error) {
-            console.error("Failed to finish onboarding:", error)
+            const res = await completeOnboarding({ goal })
+            console.log("[DIAG] finishOnboarding server result:", res)
+
+            // Critical: Force a full browser redirect to ensure new session state is loaded
+            window.location.href = "/dashboard"
+        } catch (error: any) {
+            console.error("[DIAG] Failed to finish onboarding:", error)
+            alert(`Setup failed: ${error.message || "Unknown error"}. Attempting to enter dashboard anyway...`)
+            window.location.href = "/dashboard"
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const skipOnboarding = async () => {
+        setLoading(true)
+        console.log("[DIAG] Starting skipOnboarding...")
+        try {
+            const res = await completeOnboarding({})
+            console.log("[DIAG] completeOnboarding result:", res)
+
+            // Forces redirection to dashboard regardless of session state
+            window.location.href = "/dashboard"
+        } catch (error: any) {
+            console.error("[DIAG] skipOnboarding error:", error)
+            alert(`Error: ${error.message || "Unknown error during skip"}. Redirecting to dashboard anyway...`)
+            window.location.href = "/dashboard"
         } finally {
             setLoading(false)
         }
@@ -115,7 +138,10 @@ export default function OnboardingPage() {
                                 Continue to Intelligence <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
                             </button>
 
-                            <button onClick={nextStep} className="text-slate-500 font-bold hover:text-white transition-colors block mx-auto">
+                            <button
+                                onClick={nextStep}
+                                className="text-slate-500 font-bold hover:text-white transition-colors block mx-auto disabled:opacity-50"
+                            >
                                 Setup domain later
                             </button>
                         </motion.div>
@@ -165,7 +191,10 @@ export default function OnboardingPage() {
                                 >
                                     Define Strategy <ChevronRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
                                 </button>
-                                <button onClick={nextStep} className="text-slate-500 font-bold hover:text-white transition-colors">
+                                <button
+                                    onClick={nextStep}
+                                    className="text-slate-500 font-bold hover:text-white transition-colors disabled:opacity-50"
+                                >
                                     Skip this for now
                                 </button>
                             </div>

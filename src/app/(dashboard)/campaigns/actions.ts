@@ -197,7 +197,20 @@ export async function getCampaignsData() {
             { id: 'seg-active', name: 'Active Subscribers', count: Math.floor(contactCount * 0.7), recommended: false },
         ];
 
-        return { campaigns: formattedCampaigns, segments, plan, quotas };
+        // Compute real aggregate stats from email tracking data
+        const totalEmailCount = await prisma.email.count({ where: { campaign: { userId } } });
+        const openedCount = await prisma.email.count({ where: { campaign: { userId }, opened: true } });
+        const clickedCount = await prisma.email.count({ where: { campaign: { userId }, clicked: true } });
+        const sentCount = await prisma.email.count({ where: { campaign: { userId }, status: 'sent' } });
+
+        const stats = {
+            totalSent: sentCount,
+            avgOpenRate: totalEmailCount > 0 ? Math.round((openedCount / totalEmailCount) * 100) : null,
+            avgClickRate: totalEmailCount > 0 ? Math.round((clickedCount / totalEmailCount) * 100) : null,
+            totalCampaigns: formattedCampaigns.length,
+        };
+
+        return { campaigns: formattedCampaigns, segments, plan, quotas, stats };
     } catch (error) {
         console.error("Failed to fetch campaigns data:", error);
         return { campaigns: [], segments: [] };

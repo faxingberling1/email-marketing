@@ -46,8 +46,15 @@ export default function LoginPage() {
             if (!res.ok) {
                 throw new Error(`Auth API returned ${res.status}`)
             }
-            const { role } = await res.json()
-            router.push(role === "super_admin" ? "/admin" : "/dashboard")
+            const { role, onboardingCompleted } = await res.json()
+
+            if (role === "super_admin") {
+                router.push("/admin")
+            } else if (!onboardingCompleted) {
+                router.push("/onboarding")
+            } else {
+                router.push("/dashboard")
+            }
             router.refresh()
         } catch (err) {
             console.error(err)

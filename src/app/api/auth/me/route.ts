@@ -9,12 +9,15 @@ export async function GET() {
 
     // Use $queryRaw to avoid stale Prisma client type mismatch during dev
     // (global_role column exists in DB but types regenerate on server restart)
-    const rows = await prisma.$queryRaw<{ global_role: string; is_suspended: boolean }[]>`
-        SELECT global_role, is_suspended FROM "User" WHERE id = ${session.user.id} LIMIT 1
+    const rows = await prisma.$queryRaw<{ global_role: string; onboardingCompleted: boolean; is_suspended: boolean }[]>`
+        SELECT global_role, "onboardingCompleted", is_suspended FROM "User" WHERE id = ${session.user.id} LIMIT 1
     `
 
     const user = rows[0]
     if (!user) return NextResponse.json({ role: null }, { status: 404 })
 
-    return NextResponse.json({ role: user.global_role })
+    return NextResponse.json({
+        role: user.global_role,
+        onboardingCompleted: user.onboardingCompleted
+    })
 }

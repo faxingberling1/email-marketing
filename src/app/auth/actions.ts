@@ -12,10 +12,23 @@ export async function signOut() {
 export async function registerUser(formData: any) {
     const { email, password, name } = formData
 
+    // 1. Fundamental Validation First
     if (!email || !password) {
         throw new Error("Missing email or password")
     }
 
+    // 2. Password Strength Check (Before any DB queries)
+    let score = 0
+    if (password.length >= 8) score++
+    if (/[A-Z]/.test(password)) score++
+    if (/[0-9]/.test(password)) score++
+    if (/[^A-Za-z0-9]/.test(password)) score++
+
+    if (score < 2) {
+        throw new Error("Password strength insufficient. Registration aborted.")
+    }
+
+    // 3. Check Existence
     const existingUser = await prisma.user.findUnique({
         where: { email }
     })
@@ -26,25 +39,28 @@ export async function registerUser(formData: any) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create a default workspace first
-    const workspace = await (prisma as any).workspace.create({
-        data: {
-            name: `${name || 'My'} Workspace`
-        }
-    })
+    // 4. Atomic Transaction: Create Workspace AND User
+    return await prisma.$transaction(async (tx) => {
+        // Create a default workspace
+        const workspace = await (tx as any).workspace.create({
+            data: {
+                name: `${name || 'My'} Workspace`
+            }
+        })
 
-    // Create user and link to workspace
-    const user = await (prisma as any).user.create({
-        data: {
-            email,
-            password: hashedPassword,
-            name: name || null,
-            onboardingCompleted: formData.onboardingCompleted ?? true,
-            workspaceId: workspace.id
-        }
-    })
+        // Create user and link to workspace
+        const user = await (tx as any).user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                name: name || null,
+                onboardingCompleted: formData.onboardingCompleted ?? false,
+                workspaceId: workspace.id
+            }
+        })
 
-    return user
+        return user
+    })
 }
 
 /**
@@ -78,47 +94,23 @@ export async function ensureUserWorkspace(userId: string): Promise<string> {
 }
 
 
-export async function completeOnboarding(formData: { goal: string }) {
+export async function completeOnboarding(formData: { goal?: string }) {
+    console.log("[SERVER] completeOnboarding: Start", formData)
     const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
-
-    const { goal } = formData
-
-    // 1. Generate AI Content for First Campaign
-    const prompt = `Generate a high-converting first email campaign subject and body for a new email marketing user whose goal is: ${goal}. 
-    Return as JSON: { "subject": "...", "content": "..." }`
-
-    const aiResponse = await generateAIEmailContent(prompt)
-    let aiData = { subject: "Welcome to Intelligent Growth", content: "Start your first sequence here." }
-
-    try {
-        if (aiResponse) {
-            // Basic parsing if Gemini returns JSON-like text
-            const jsonStr = aiResponse.match(/\{[\s\S]*\}/)?.[0]
-            if (jsonStr) aiData = JSON.parse(jsonStr)
-        }
-    } catch (e) {
-        console.warn("Failed to parse Gemini JSON, using defaults")
+    if (!session?.user?.id) {
+        console.error("[SERVER] completeOnboarding: Unauthorized")
+        throw new Error("Unauthorized")
     }
 
-    // 2. Create Initial Campaign
-    await (prisma as any).campaign.create({
-        data: {
-            userId: session.user.id,
-            name: `Initial ${goal.charAt(0).toUpperCase() + goal.slice(1)} Campaign`,
-            subject: aiData.subject,
-            aiContent: aiData.content,
-            status: "draft"
-        }
-    })
-
-    // 3. Mark Onboarding as Complete
+    // Mark Onboarding as Complete
+    console.log("[SERVER] completeOnboarding: Updating user DB record...")
     await (prisma as any).user.update({
         where: { id: session.user.id },
         data: {
             onboardingCompleted: true
         }
     })
+    console.log("[SERVER] completeOnboarding: Mark complete success")
 
     return { success: true }
 }
