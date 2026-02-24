@@ -67,7 +67,10 @@ export function CreateCampaignModal({ isOpen, onClose, segments, plan, quotas }:
             sequences: data.sequences
         })
         setIsLoading(false)
-        if (result.success) onClose()
+        if (result.success) {
+            window.dispatchEvent(new Event('sidebar:refresh'))
+            onClose()
+        }
     }
 
     if (!isOpen) return null

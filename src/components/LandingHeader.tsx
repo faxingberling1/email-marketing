@@ -5,7 +5,8 @@ import { Mail, ArrowRight, Menu, X, LogOut, ChevronDown, User } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { signOut } from "@/app/auth/actions"
 import { cn } from "@/lib/utils"
 import { LandingCmsHeader } from "../app/admin/cms/tabs/HeaderTab"
 
@@ -23,7 +24,7 @@ const DEFAULT_HEADER: LandingCmsHeader = {
 }
 
 export function LandingHeader({ content }: { content?: LandingCmsHeader }) {
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -83,7 +84,7 @@ export function LandingHeader({ content }: { content?: LandingCmsHeader }) {
 
                 {/* Right Side Actions */}
                 <div className="flex items-center gap-3">
-                    {!session ? (
+                    {status === 'loading' ? null : !session ? (
                         <>
                             <Link
                                 href="/login"

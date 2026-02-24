@@ -24,10 +24,9 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { signOut } from "@/app/auth/actions"
 import { useSidebar } from "./SidebarContext"
 import { motion, AnimatePresence } from "framer-motion"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { PlanDetailsModal } from "./PlanDetailsModal"
 
 const adminNavigation = [
@@ -54,7 +53,12 @@ export function Sidebar() {
         }
         fetchData()
         const interval = setInterval(fetchData, 30000) // Poll every 30s
-        return () => clearInterval(interval)
+        // Listen for instant refresh events (e.g. campaign deleted/created)
+        window.addEventListener('sidebar:refresh', fetchData)
+        return () => {
+            clearInterval(interval)
+            window.removeEventListener('sidebar:refresh', fetchData)
+        }
     }, [])
 
     const planMapping: Record<string, { name: string, color: string }> = {
@@ -269,7 +273,7 @@ export function Sidebar() {
                 )}
 
                 <button
-                    onClick={() => signOut()}
+                    onClick={() => signOut({ callbackUrl: "/" })}
                     className={cn(
                         "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-500 group",
                         isCollapsed && "justify-center px-2"

@@ -3,8 +3,7 @@
 import { Bell, Search, Mail, Sparkles, ChevronDown, LogOut, Settings, CreditCard, Plus, Menu, Zap, TrendingUp, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { signOut } from "@/app/auth/actions"
+import { useSession, signOut } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "./SidebarContext"
 import Link from "next/link"
@@ -284,7 +283,7 @@ export function Header() {
 
                                     <div className="mt-3 pt-3 border-t border-white/[0.03] relative">
                                         <button
-                                            onClick={() => signOut()}
+                                            onClick={() => signOut({ callbackUrl: "/" })}
                                             className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-rose-500/5 hover:text-rose-400 group/logout"
                                         >
                                             <div className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center group-hover/logout:bg-rose-500/20 transition-colors">
