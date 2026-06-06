@@ -1,9 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "./db";
 
-const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
-
 // Default fallback model
 const DEFAULT_MODEL = "gemini-1.5-flash-latest";
 
@@ -29,7 +26,9 @@ async function getActiveModel() {
  * Use this in async server components or actions to ensure the correct model is used.
  */
 export async function getDynamicModel() {
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
     if (!apiKey) throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is missing");
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     const modelName = await getActiveModel();
     return genAI.getGenerativeModel({ model: modelName });
