@@ -5,6 +5,7 @@ import { Mail, Loader2, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { LandingHeader } from "@/components/LandingHeader"
+import { forgotPassword } from "./actions"
 
 export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false)
@@ -17,11 +18,14 @@ export default function ForgotPasswordPage() {
         setLoading(true)
         setErrorMsg("")
 
-        // Simulating a network request for password reset
-        setTimeout(() => {
-            setLoading(false)
+        const res = await forgotPassword(email)
+        
+        setLoading(false)
+        if (res.success) {
             setSuccess(true)
-        }, 1500)
+        } else {
+            setErrorMsg(res.error || "An error occurred")
+        }
     }
 
     return (

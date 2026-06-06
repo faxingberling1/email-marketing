@@ -20,9 +20,10 @@ import { SubscriptionSettings } from "@/components/SubscriptionSettings"
 import { IntegrationSettings } from "@/components/IntegrationSettings"
 import { AIPreferenceSettings } from "@/components/AIPreferenceSettings"
 import { DomainSettings } from "@/components/DomainSettings"
+import { SecuritySettings } from "@/components/SecuritySettings"
 import { getSettingsData } from "./actions"
 
-type TabType = 'profile' | 'subscription' | 'integrations' | 'ai' | 'domains'
+type TabType = 'profile' | 'subscription' | 'integrations' | 'ai' | 'domains' | 'security'
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<TabType>('profile')
@@ -59,6 +60,7 @@ export default function SettingsPage() {
         { id: 'integrations', label: 'Integrations', icon: Link },
         { id: 'ai', label: 'AI Preferences', icon: BrainCircuit },
         { id: 'domains', label: 'Domains', icon: Globe },
+        { id: 'security', label: 'Security', icon: Shield },
     ]
 
     return (
@@ -123,6 +125,7 @@ export default function SettingsPage() {
                             {activeTab === 'integrations' && <IntegrationSettings integrations={data.integrations} />}
                             {activeTab === 'ai' && <AIPreferenceSettings data={data.aiPreferences} />}
                             {activeTab === 'domains' && <DomainSettings domains={data.domains} />}
+                            {activeTab === 'security' && <SecuritySettings />}
                         </div>
                     </motion.div>
                 </AnimatePresence>

@@ -15,10 +15,12 @@ import {
     Mail,
     Type,
     Layout,
-    Check
+    Check,
+    Save
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { createCampaign } from "../actions"
+import { createCampaign, sendCampaign } from "../actions"
+import { saveTemplate } from "@/app/(dashboard)/templates/actions"
 import { useRouter } from "next/navigation"
 
 const steps = [
@@ -47,7 +49,7 @@ export default function NewCampaignPage() {
     const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, 4))
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
-    const handleFinish = async () => {
+    const handleFinish = async (isDraft = false) => {
         setSaving(true)
         let segmentCount = 1000;
         if (formData.segment === "High Value Customers") segmentCount = 250;
@@ -59,13 +61,43 @@ export default function NewCampaignPage() {
             segment: formData.segment,
             segmentCount,
             content: formData.content,
-            status: 'completed'
+            status: 'draft'
         })
-        if (res.success) {
-            alert("Campaign saved successfully!")
-            router.push("/dashboard")
+        
+        if (res.success && !isDraft) {
+            const sendRes = await sendCampaign(res.campaign.id);
+            if (sendRes.success) {
+                alert(`Campaign sent successfully to ${sendRes.sent} contacts!`);
+            } else {
+                alert("Campaign saved but failed to send: " + sendRes.error);
+            }
+            router.push("/campaigns")
+        } else if (res.success && isDraft) {
+            alert("Draft saved successfully!")
+            router.push("/campaigns")
         } else {
             alert("Error saving campaign.")
+        }
+        
+        setSaving(false)
+    }
+
+    const handleSaveTemplate = async () => {
+        if (!formData.content) {
+            alert("Generate some content first.")
+            return
+        }
+        setSaving(true)
+        const res = await saveTemplate({
+            name: formData.name || "Campaign Template",
+            subject: formData.subject,
+            htmlContent: `<p>${formData.content.replace(/\\n/g, '<br/>')}</p>`,
+            textContent: formData.content
+        })
+        if (res.success) {
+            alert("Template saved!")
+        } else {
+            alert("Failed to save template.")
         }
         setSaving(false)
     }
@@ -254,6 +286,17 @@ export default function NewCampaignPage() {
                                             value={formData.content}
                                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                         />
+                                        {formData.content && (
+                                            <div className="flex justify-end pt-2">
+                                                <button
+                                                    onClick={handleSaveTemplate}
+                                                    disabled={saving}
+                                                    className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
+                                                >
+                                                    <Save className="h-3 w-3" /> Save as Template
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -279,15 +322,19 @@ export default function NewCampaignPage() {
                                         </div>
                                         <div className="flex flex-col gap-3">
                                             <button
-                                                onClick={handleFinish}
+                                                onClick={() => handleFinish(false)}
                                                 disabled={saving}
                                                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-bold text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                                             >
                                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                                 Send Now
                                             </button>
-                                            <button className="w-full rounded-xl border border-slate-800 py-3 font-bold text-slate-400 hover:bg-slate-900 transition-all">
-                                                Schedule for Later
+                                            <button 
+                                                onClick={() => handleFinish(true)}
+                                                disabled={saving}
+                                                className="w-full rounded-xl border border-slate-800 py-3 font-bold text-slate-400 hover:bg-slate-900 transition-all disabled:opacity-50"
+                                            >
+                                                Save as Draft
                                             </button>
                                         </div>
                                     </div>

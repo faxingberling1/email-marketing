@@ -18,8 +18,8 @@ export function AddonSelector() {
         setIsPurchasing(id)
         try {
             const result = await purchaseAddon(id)
-            if (result.success) {
-                // Tactical success feedback could be added here
+            if (result.success && result.url) {
+                window.location.href = result.url
             }
         } catch (error) {
             console.error("Purchase protocol failed:", error)

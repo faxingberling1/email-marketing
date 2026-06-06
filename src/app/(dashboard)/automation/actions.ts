@@ -5,89 +5,77 @@ import { auth } from "@/auth";
 import { getDynamicModel } from "@/lib/gemini";
 import { getCachedData, setCachedData } from "@/lib/cache";
 
-export async function getAutomationSequences() {
+export async function getAutomationData() {
     const session = await auth();
-    if (!session?.user?.id) return [];
-
-    const cacheKey = `automation_sequences_${session.user.id}`;
-    const cached = getCachedData<any>(cacheKey, 60 * 60 * 1000); // 1 hour TTL
-    if (cached) return cached;
+    if (!session?.user?.id) return { sequences: [], insights: [], segments: [], plan: 'free', quotas: null };
 
     try {
-        const systemInstruction = `You are an AI Automation Strategist.
-        Generate 3 distinct email automation sequence summaries that a SaaS or E-commerce company should be running.
-        
-        Respond ONLY with a JSON array of objects matching this exact shape:
-        [
-            {
-                "id": "s1",
-                "name": "Creative sequence name (e.g. 'Visionary Onboarding Orbit')",
-                "status": "Optimized", "Needs Improvement", or "Stable",
-                "steps": number between 3 and 7,
-                "activeContacts": number between 100 and 5000,
-                "avgConversion": "percentage string",
-                "lastOptimization": "e.g. 24h ago"
-            }
-        ]
-        Do not include markdown codeblocks.`;
+        const [campaigns, user] = await Promise.all([
+            prisma.campaign.findMany({
+                where: { userId: session.user.id, type: 'AUTOMATION' },
+                include: { sequences: true },
+                orderBy: { updatedAt: 'desc' }
+            }),
+            prisma.user.findUnique({
+                where: { id: session.user.id },
+                include: { workspace: true, _count: { select: { campaigns: true } } }
+            })
+        ]);
 
-        const model = await getDynamicModel();
-        const result = await model.generateContent(systemInstruction);
-        const responseText = result.response.text();
-        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const sequences = campaigns.map(c => ({
+            id: c.id,
+            name: c.name,
+            status: c.status === 'ACTIVE' ? 'Optimized' : (c.status === 'DRAFT' ? 'Needs Improvement' : 'Stable'),
+            steps: c.sequences.length,
+            activeContacts: 0,
+            avgConversion: '0%',
+            lastOptimization: c.updatedAt.toLocaleDateString()
+        }));
 
-        const data = JSON.parse(cleanedJSON);
-        setCachedData(cacheKey, data);
-        return data;
-    } catch (error) {
-        console.error("Gemini AI Sequence Gen Error:", error);
-        return [
-            { id: 's1', name: 'Visionary Onboarding Orbit', status: 'Optimized', steps: 4, activeContacts: 1240, avgConversion: '22%', lastOptimization: '2h ago' },
-            { id: 's2', name: 'Churn Risk Mitigation', status: 'Stable', steps: 5, activeContacts: 850, avgConversion: '15%', lastOptimization: '12h ago' }
+        // Mock segments
+        const segments = [
+            { id: 'seg-all', name: 'All Contacts', count: 1200 },
+            { id: 'seg-active', name: 'Active Users', count: 450 }
         ];
+
+        const plan = user?.workspace?.subscription_plan?.toLowerCase() || 'free';
+        const quotas = {
+            emails: { remaining: (user?.workspace?.email_limit_remaining || 5000) - (user?.workspace?.total_emails_sent || 0) },
+            ai: { remaining: user?.workspace?.ai_credits_remaining || 100 }
+        };
+
+        return { sequences, insights: [], segments, plan, quotas };
+
+    } catch (error) {
+        console.error("Fetch Automation Data Error:", error);
+        return { sequences: [], insights: [], segments: [], plan: 'free', quotas: null };
     }
 }
 
-export async function getSequenceFlow(sequenceId: string) {
-    const cacheKey = `sequence_flow_${sequenceId}`;
-    const cached = getCachedData<any>(cacheKey, 24 * 60 * 60 * 1000); // 24 hour TTL (flows change rarely)
-    if (cached) return cached;
+export async function getSequenceFlow(campaignId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return [];
 
     try {
-        const systemInstruction = `You are a tactical email automation structural AI.
-        Generate a 4 to 6 step flow diagram for an optimal email sequence.
-        The sequence should include a mix of triggers, emails, wait periods, and conditions.
-        
-        Respond ONLY with a JSON array of objects matching this exact shape:
-        [
-            { 
-                "id": "1", 
-                "type": "trigger", "email", "wait", or "condition", 
-                "label": "Short descriptive label", 
-                "performance": "Optional string (e.g. '45% Open / 12% Click') - only for emails", 
-                "status": "active", "optimized", "stable", or "needs_work", 
-                "delay": "Optional string (e.g. 'Instant' or '2 Days')" 
-            }
-        ]
-        Do not include markdown codeblocks.`;
+        const campaign = await prisma.campaign.findUnique({
+            where: { id: campaignId, userId: session.user.id },
+            include: { sequences: { orderBy: { stepNumber: 'asc' } } }
+        });
 
-        const model = await getDynamicModel();
-        const result = await model.generateContent(systemInstruction);
-        const responseText = result.response.text();
-        const cleanedJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        if (!campaign) return [];
 
-        const data = JSON.parse(cleanedJSON);
-        setCachedData(cacheKey, data);
-        return data;
+        return campaign.sequences.map((s, index) => ({
+            id: s.id,
+            type: s.triggerEvent === 'delay' ? 'wait' : 'email',
+            label: s.subject || `Step ${index + 1}`,
+            performance: '0% Open / 0% Click', // Mock for now
+            status: s.status,
+            delay: s.delayTime > 0 ? `${s.delayTime} days` : 'Instant'
+        }));
 
     } catch (error) {
-        console.error("Gemini AI Flow Gen Error:", error);
-        return [
-            { id: '1', type: 'trigger', label: 'Identity Verification Trigger', status: 'active' },
-            { id: '2', type: 'email', label: 'Welcome Transfixed', performance: '45% Open / 12% Click', status: 'optimized' },
-            { id: '3', type: 'wait', label: '2 Day Logic Gap', status: 'stable' },
-            { id: '4', type: 'email', label: 'Growth Catalyst', performance: '32% Open / 8% Click', status: 'needs_work' }
-        ];
+        console.error("Fetch Flow Error:", error);
+        return [];
     }
 }
 

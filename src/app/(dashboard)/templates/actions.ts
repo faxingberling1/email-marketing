@@ -2,46 +2,36 @@
 
 // Template Intelligence Layer
 
-import {
-    RotateCcw,
-    Activity,
-    Target,
-    Sparkles
-} from "lucide-react"
+import { auth } from "@/auth"
+import { prisma } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 export async function getTemplates() {
-    // Mocking creative synthesis delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const session = await auth();
+    if (!session?.user?.id) return [];
 
-    return [
-        {
-            id: 't1',
-            name: 'Visionary Product Launch',
-            description: 'High-contrast layout optimized for new SaaS features.',
-            category: 'AI Recommended',
-            engagementScore: 94,
-            thumbnail: '/templates/launch.jpg',
-            lastEdited: '2h ago'
-        },
-        {
-            id: 't2',
-            name: 'Beta Recruitment Orbit',
-            description: 'Minimalist engagement driver for early adopters.',
-            category: 'User Created',
-            engagementScore: 88,
-            thumbnail: '/templates/beta.jpg',
-            lastEdited: '1d ago'
-        },
-        {
-            id: 't3',
-            name: 'Strategic Retention Flow',
-            description: 'Personalized re-engagement blocks with AI dynamic fields.',
-            category: 'Custom',
-            engagementScore: 91,
-            thumbnail: '/templates/retention.jpg',
-            lastEdited: '3d ago'
-        }
-    ];
+    try {
+        const templates = await prisma.template.findMany({
+            where: { userId: session.user.id },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        // Map DB models to the expected UI format (mock data format for now + DB records)
+        return templates.map(t => ({
+            id: t.id,
+            name: t.name,
+            description: t.subject || 'No subject',
+            category: t.category,
+            engagementScore: 0,
+            thumbnail: '/templates/custom.jpg', // Placeholder
+            lastEdited: t.updatedAt.toLocaleDateString(),
+            htmlContent: t.htmlContent,
+            textContent: t.textContent
+        }));
+    } catch (e) {
+        console.error("Failed to load templates", e);
+        return [];
+    }
 }
 
 export async function translateTemplate(content: string, targetLanguage: string, tone: string) {
@@ -67,10 +57,30 @@ export async function optimizeTemplateLayout(templateId: string) {
     };
 }
 
-export async function saveTemplate(data: any) {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return { success: true, id: 't_new_' + Math.random().toString(36).substr(2, 9) };
+export async function saveTemplate(data: { name: string; subject?: string; htmlContent: string; textContent?: string }) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    try {
+        const template = await prisma.template.create({
+            data: {
+                userId: session.user.id,
+                name: data.name || "Untitled Template",
+                subject: data.subject,
+                htmlContent: data.htmlContent,
+                textContent: data.textContent,
+                category: "Custom",
+            }
+        });
+        
+        revalidatePath("/templates");
+        return { success: true, id: template.id };
+    } catch (error) {
+        console.error("Save template error:", error);
+        return { success: false, error: "Database error" };
+    }
 }
+
 export async function generateAIDraft(prompt: string, tone: string) {
     await new Promise(resolve => setTimeout(resolve, 2500));
     return {

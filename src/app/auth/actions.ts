@@ -94,13 +94,17 @@ export async function ensureUserWorkspace(userId: string): Promise<string> {
 }
 
 
-export async function completeOnboarding(formData: { goal?: string }) {
+import { registerDomain } from "@/lib/services/resend-domains"
+
+export async function completeOnboarding(formData: { goal?: string, domain?: string }) {
     console.log("[SERVER] completeOnboarding: Start", formData)
     const session = await auth()
     if (!session?.user?.id) {
         console.error("[SERVER] completeOnboarding: Unauthorized")
         throw new Error("Unauthorized")
     }
+
+    const workspaceId = await ensureUserWorkspace(session.user.id)
 
     // Mark Onboarding as Complete
     console.log("[SERVER] completeOnboarding: Updating user DB record...")
@@ -110,6 +114,21 @@ export async function completeOnboarding(formData: { goal?: string }) {
             onboardingCompleted: true
         }
     })
+
+    if (formData.domain && formData.domain.trim().length > 0) {
+        try {
+            console.log("[SERVER] completeOnboarding: Registering domain", formData.domain)
+            const resendData = await registerDomain(formData.domain)
+            const id = `cl${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
+            await prisma.$executeRaw`
+                INSERT INTO "VerifiedDomain" ("id", "domain", "resendId", "status", "dkimRecords", "workspaceId", "updatedAt")
+                VALUES (${id}, ${formData.domain}, ${resendData.id}, 'pending', ${JSON.stringify(resendData.records || [])}::jsonb, ${workspaceId}, NOW())
+            `
+        } catch (error) {
+            console.error("[SERVER] completeOnboarding: Failed to register domain", error)
+        }
+    }
+
     console.log("[SERVER] completeOnboarding: Mark complete success")
 
     return { success: true }

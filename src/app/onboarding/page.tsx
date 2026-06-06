@@ -37,7 +37,7 @@ export default function OnboardingPage() {
         setLoading(true)
         console.log("[DIAG] Starting finishOnboarding with goal:", goal)
         try {
-            const res = await completeOnboarding({ goal })
+            const res = await completeOnboarding({ goal, domain })
             console.log("[DIAG] finishOnboarding server result:", res)
 
             // Critical: Force a full browser redirect to ensure new session state is loaded

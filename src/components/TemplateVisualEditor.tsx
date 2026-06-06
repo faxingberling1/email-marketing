@@ -21,6 +21,7 @@ import {
     Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { saveTemplate } from "@/app/(dashboard)/templates/actions"
 
 import { TemplateNeuralHUD } from "./TemplateNeuralHUD"
 
@@ -43,6 +44,36 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
     ])
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [showAI, setShowAI] = useState(false)
+    const [saving, setSaving] = useState(false)
+
+    const handleSave = async () => {
+        setSaving(true);
+        const html = blocks.map(b => {
+            if (b.type === 'header') return `<h2>${b.content}</h2>`;
+            if (b.type === 'text') return `<p>${b.content}</p>`;
+            if (b.type === 'button') return `<button>${b.content}</button>`;
+            if (b.type === 'image') return `<img src="/placeholder.jpg" alt="Image" />`;
+            if (b.type === 'divider') return `<hr />`;
+            return '';
+        }).join('\\n');
+        
+        const name = blocks.find(b => b.type === 'header')?.content || 'New Template';
+        const firstText = blocks.find(b => b.type === 'text')?.content;
+        
+        const res = await saveTemplate({
+            name,
+            subject: firstText ? firstText.substring(0, 50) + '...' : undefined,
+            htmlContent: html,
+            textContent: blocks.map(b => b.content).filter(Boolean).join('\\n')
+        });
+        
+        setSaving(false);
+        if (res.success) {
+            alert("Template saved successfully!");
+        } else {
+            alert("Error saving template.");
+        }
+    }
 
     const addBlock = (type: Block['type']) => {
         const newBlock: Block = {
@@ -123,10 +154,18 @@ export function TemplateVisualEditor({ initialBlocks = [] }: TemplateVisualEdito
                 </div>
 
                 <div className="flex flex-col gap-3 mt-auto">
-                    <button className="flex items-center justify-center gap-3 bg-indigo-500 hover:bg-indigo-400 py-4 rounded-2xl text-[9px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all">
-                        <Save className="h-4 w-4" /> COMMIT TO REPOSITORY
+                    <button 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center justify-center gap-3 bg-indigo-500 hover:bg-indigo-400 py-4 rounded-2xl text-[9px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all disabled:opacity-50"
+                    >
+                        {saving ? <Activity className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} 
+                        {saving ? "COMMITTING..." : "COMMIT TO REPOSITORY"}
                     </button>
-                    <button className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 py-4 rounded-2xl text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border border-white/5 transition-all">
+                    <button 
+                        onClick={() => setBlocks([])}
+                        className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 py-4 rounded-2xl text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border border-white/5 transition-all"
+                    >
                         <RotateCcw className="h-4 w-4" /> RESET CANVAS
                     </button>
                 </div>

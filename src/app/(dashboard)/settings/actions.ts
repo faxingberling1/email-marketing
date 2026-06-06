@@ -7,6 +7,30 @@ import { getWorkspaceQuotas } from "@/lib/services/usage-enforcement"
 import { TIER_CONFIG, SubscriptionTier } from "@/lib/tiers"
 import { revalidatePath } from "next/cache"
 import { registerDomain, verifyDomain, getDomainDetails, deleteDomain } from "@/lib/services/resend-domains"
+import bcrypt from "bcryptjs"
+
+export async function changePassword(currentPass: string, newPass: string) {
+    const session = await auth()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+        if (!user || !user.password) return { success: false, error: "Account does not use password authentication." }
+
+        const isValid = await bcrypt.compare(currentPass, user.password)
+        if (!isValid) return { success: false, error: "Incorrect current password." }
+
+        const hashed = await bcrypt.hash(newPass, 10)
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { password: hashed }
+        })
+
+        return { success: true }
+    } catch (e: any) {
+        return { success: false, error: "Failed to update security credentials." }
+    }
+}
 
 export async function getSettingsData() {
     const session = await auth()

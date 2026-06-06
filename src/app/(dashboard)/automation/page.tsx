@@ -23,7 +23,8 @@ import { SequenceFlow } from "@/components/SequenceFlow"
 import { AutomationTriggers } from "@/components/AutomationTriggers"
 import { RetargetingHub } from "@/components/RetargetingHub"
 import { StepIntelligence } from "@/components/StepIntelligence"
-import { getAutomationSequences, getSequenceFlow, getRetargetingInsights } from "./actions"
+import { getAutomationData, getSequenceFlow, getRetargetingInsights } from "./actions"
+import { CreateCampaignModal } from "@/components/CreateCampaignModal"
 
 export default function AutomationPage() {
     const [view, setView] = useState<'hub' | 'editor'>('hub')
@@ -32,16 +33,19 @@ export default function AutomationPage() {
     const [insights, setInsights] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedSequence, setSelectedSequence] = useState<any>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [pageData, setPageData] = useState<any>({ segments: [], plan: 'free', quotas: null })
 
     useEffect(() => {
         async function loadHubData() {
             setLoading(true)
-            const [seqResult, insightResult] = await Promise.all([
-                getAutomationSequences(),
+            const [data, insightResult] = await Promise.all([
+                getAutomationData(),
                 getRetargetingInsights()
             ])
-            setSequences(seqResult)
+            setSequences(data.sequences)
             setInsights(insightResult)
+            setPageData({ segments: data.segments, plan: data.plan, quotas: data.quotas })
             setLoading(false)
         }
         loadHubData()
@@ -99,7 +103,10 @@ export default function AutomationPage() {
                             <ArrowLeft className="h-3.5 w-3.5" /> Return to Hub
                         </button>
                     )}
-                    <button className="bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all flex items-center gap-2">
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 transition-all flex items-center gap-2"
+                    >
                         <Plus className="h-4 w-4" /> CREATE SEQUENCE
                     </button>
                 </div>
@@ -197,6 +204,18 @@ export default function AutomationPage() {
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Nodes Synchronized</span>
                 </div>
             </div>
+
+            <CreateCampaignModal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false)
+                    // We need a way to reload data, so let's use window.location.reload for simplicity
+                    window.location.reload()
+                }}
+                segments={pageData.segments}
+                plan={pageData.plan}
+                quotas={pageData.quotas || { ai: { remaining: 0 }, emails: { remaining: 0 } }}
+            />
         </div>
     )
 }
